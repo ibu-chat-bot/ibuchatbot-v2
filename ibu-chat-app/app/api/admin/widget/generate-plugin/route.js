@@ -18,7 +18,7 @@ export async function POST(req) {
     } = await req.json()
 
     // 1. Read base widget script
-    const widgetPath = 'd:\\IBU CHATBOT V2\\wordpress_widget.js'
+    const widgetPath = path.join(process.cwd(), '..', 'wordpress_widget.js')
     if (!fs.existsSync(widgetPath)) {
       return Response.json(
         { error: 'Widget kaynak dosyası bulunamadı.' },
