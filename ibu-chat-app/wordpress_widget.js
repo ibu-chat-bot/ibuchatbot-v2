@@ -42,6 +42,63 @@
     return /[çğıöşüÇĞİÖŞÜ]|\b(ne|nasıl|hangi|kayıt|burs|üniversite)\b/i.test(text) ? 'tr' : 'en';
   }
 
+  // ── Değişiklik 1: Markdown Render ──
+  function renderMarkdown(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^[\-\*] (.+)/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*<\/li>)/g, '<ul style="margin:6px 0 6px 16px;padding:0;">$1</ul>')
+      .replace(/\[(.+?)\]\((https?:\/\/.+?)\)/g,
+        '<a href="$2" target="_blank" rel="noopener" style="color:' + pc + ';text-decoration:underline;">$1</a>')
+      .replace(/\n{2,}/g, '<br><br>')
+      .replace(/\n/g, '<br>');
+  }
+
+  // ── Değişiklik 2: Öneri Soruları Parse ──
+  function extractSuggestions(text) {
+    const markers = [
+      '\uD83D\uDCA1 Bunları da sorabilirsiniz:',
+      '\uD83D\uDCA1 Bunları da sorabilirsiniz',
+      'Bunları da sorabilirsiniz:',
+    ];
+    let markerIdx = -1;
+    let markerLen = 0;
+    for (const marker of markers) {
+      const idx = text.indexOf(marker);
+      if (idx !== -1) { markerIdx = idx; markerLen = marker.length; break; }
+    }
+    if (markerIdx === -1) return { mainText: text, suggestions: [] };
+    const mainText = text.slice(0, markerIdx).trim();
+    const sugPart  = text.slice(markerIdx + markerLen);
+    const suggestions = sugPart
+      .split('\n')
+      .map(s => s.replace(/^[\-\•\*\d\.] */, '').trim())
+      .filter(s => s.length > 5 && s.length < 120);
+    return { mainText, suggestions };
+  }
+
+  // ── Değişiklik 3: Öneri Buton Oluşturucu ──
+  function createSuggestionButtons(suggestions, onClickFn) {
+    if (!suggestions || suggestions.length === 0) return null;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ibu-sug-wrap';
+    const lbl = document.createElement('div');
+    lbl.className = 'ibu-sug-lbl';
+    lbl.textContent = lang === 'tr' ? 'İlgili konular' : 'Related topics';
+    wrapper.appendChild(lbl);
+    const lst = document.createElement('div');
+    lst.className = 'ibu-sug-list';
+    suggestions.forEach(sug => {
+      const btn = document.createElement('button');
+      btn.className = 'ibu-sug-btn';
+      btn.innerHTML = `<span>${sug}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="9 18 15 12 9 6"/></svg>`;
+      btn.onclick = () => { wrapper.remove(); document.querySelectorAll('.ibu-sug-wrap').forEach(w => w.remove()); onClickFn(sug); };
+      lst.appendChild(btn);
+    });
+    wrapper.appendChild(lst);
+    return wrapper;
+  }
+
   const [r, g, b] = hexRgb(pc);
   const [ar, ag, ab] = hexRgb(ac);
 
@@ -268,6 +325,10 @@
 .ibu-sug-btn:hover svg{
   transform:translateX(2px);color:${pc};
 }
+/* ── Değişiklik 4: Ek CSS ── */
+.ibu-bub ul{margin:6px 0 6px 16px;padding:0;}
+.ibu-bub li{margin-bottom:4px;line-height:1.5;}
+.ibu-bub strong{font-weight:600;}
 
 /* ── QUICK REPLIES ── */
 .ibu-qr-bar{
@@ -525,10 +586,24 @@
           if (!line.startsWith('data:')) continue;
           try {
             const d = JSON.parse(line.slice(5));
-            if (d.text) { full += d.text; bub.innerHTML = full.replace(/\n/g, '<br>'); scroll(); }
+            if (d.text) {
+              // ── Değişiklik 6: Streaming sırasında renderMarkdown ──
+              full += d.text;
+              const { mainText: streamText } = extractSuggestions(full);
+              bub.innerHTML = renderMarkdown(streamText);
+              scroll();
+            }
             if (d.done) {
               lang = d.lang || lang;
-              if (d.suggestions?.length) addSuggs(botGroup, d.suggestions);
+              // ── Değişiklik 5: Stream sonrası öneri butonları ──
+              const { mainText, suggestions: inlineSuggs } = extractSuggestions(full);
+              bub.innerHTML = renderMarkdown(mainText);
+              const finalSuggs = d.suggestions?.length ? d.suggestions : inlineSuggs;
+              if (finalSuggs.length) {
+                const sugEl = createSuggestionButtons(finalSuggs, (q) => { send(q); });
+                if (sugEl) botGroup.insertAdjacentElement('afterend', sugEl);
+              }
+              scroll();
             }
           } catch { }
         }
