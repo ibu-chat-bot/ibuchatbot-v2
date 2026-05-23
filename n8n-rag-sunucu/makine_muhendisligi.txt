@@ -1,9 +1,0 @@
-﻿SORULAR:
-Makine mühendisliği programı mevcut mu?
-Okulda makine mühendisliği var mı?
-Makina mühendisliği bölümü açıldı mı?
-Makine mühendisi olmak için eğitim alabilir miyim?
-Mühendislik fakültesinde makine bölümü var mı?
-
-CEVAP:
-Hayır, Uluslararası Balkan Üniversitesi'nde şu an için Makine Mühendisliği bölümü bulunmamaktadır.

@@ -1,9 +1,0 @@
-SORULAR:
-Tıp okumak istiyorum, bölümünüz var mı?
-Üniversitemizde Tıp Fakültesi bulunuyor mu?
-Doktorluk eğitimi alabilir miyim?
-Tıp fakültesine kayıt şartları nelerdir?
-Tıp bölümü için taban puanlarınız nedir?
-
-CEVAP:
-Uluslararası Balkan Üniversitesi'nde (IBU) şu an için Tıp Fakültesi bulunmamaktadır ve Tıp (Doktorluk) eğitimi verilmemektedir.

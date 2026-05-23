@@ -1,9 +1,0 @@
-SORULAR:
-Elektrik elektronik mühendisliği bölümü var mı?
-Üniversitede elektrik elektronik mühendisliği bulunuyor mu?
-Elektrik mühendisliği eğitimi veriliyor mu?
-Elektrik-elektronik mühendisi olmak için eğitim alabilir miyim?
-Mühendislik fakültesinde elektrik bölümü mevcut mu?
-
-CEVAP:
-Uluslararası Balkan Üniversitesi'nde şu an için Elektrik-Elektronik Mühendisliği bölümü bulunmamaktadır.

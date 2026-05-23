@@ -1,9 +1,0 @@
-SORULAR:
-Veterinerlik bölümü var mı?
-Üniversitede veterinerlik bölümü bulunuyor mu?
-Veteriner fakülteniz var mı?
-Veterinerlik eğitimi veriliyor mu?
-Hayvan sağlığı veya veterinerlik alanı bulunuyor mu?
-
-CEVAP:
-Uluslararası Balkan Üniversitesi'nde (IBU) Veterinerlik Fakültesi veya Veterinerlik bölümü bulunmamaktadır.
