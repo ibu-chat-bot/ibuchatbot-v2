@@ -10,6 +10,9 @@ export async function POST(req) {
       primaryColor,
       accentColor,
       position,
+      theme,
+      tooltipTr,
+      tooltipEn,
       welcomeTr,
       welcomeEn,
       quickRepliesTr,
@@ -33,8 +36,11 @@ export async function POST(req) {
     primaryColor: '${primaryColor.trim()}',
     accentColor: '${accentColor.trim()}',
     botName: '${botName.trim()}',
-    welcomeTr: '${welcomeTr.trim()}',
-    welcomeEn: '${welcomeEn.trim()}',
+    theme: '${theme.trim()}',
+    tooltipTr: '${tooltipTr.replace(/'/g, "\\'").trim()}',
+    tooltipEn: '${tooltipEn.replace(/'/g, "\\'").trim()}',
+    welcomeTr: '${welcomeTr.replace(/'/g, "\\'").trim()}',
+    welcomeEn: '${welcomeEn.replace(/'/g, "\\'").trim()}',
     placeholderTr: 'Sorunuzu yazın...',
     placeholderEn: 'Type your question...',
     quickRepliesTr: ${JSON.stringify(quickRepliesTr)},
@@ -49,6 +55,8 @@ export async function POST(req) {
       // Replace right alignments with left alignments
       code = code.replace(/bottom: 24px;\s*right: 24px;/g, 'bottom: 24px; left: 24px;')
       code = code.replace(/bottom: 92px;\s*right: 24px;/g, 'bottom: 92px; left: 24px;')
+      code = code.replace(/bottom: 32px;\s*right: 96px;/g, 'bottom: 32px; left: 96px;')
+      code = code.replace(/right: -6px;/g, 'left: -6px; border-top: none; border-right: none; border-bottom: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0;')
       code = code.replace(/transform-origin: bottom right;/g, 'transform-origin: bottom left;')
     }
 

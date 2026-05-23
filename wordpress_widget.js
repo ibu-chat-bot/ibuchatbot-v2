@@ -1,18 +1,3 @@
-/**
- * ============================================================
- * IBU CHATBOT WIDGET — WordPress footer.php'ye yapıştırın
- * </body> etiketinden HEMEN ÖNCE ekleyin
- * ============================================================
- * 
- * KURULUM:
- * 1. IBU_CONFIG içindeki apiUrl'i kendi Next.js URL'niz ile değiştirin
- * 2. Aşağıdaki tüm <script> bloğunu WordPress'e ekleyin:
- *    - Yöntem A: footer.php dosyasına </body>'den önce yapıştır
- *    - Yöntem B: Görünüm > Özelleştir > Ek CSS yerine "Ek JS" plugin'i kullan
- *    - Yöntem C: WPCode veya Code Snippets plugin'i ile ekle
- * ============================================================
- */
-
 (function () {
   'use strict';
 
@@ -22,6 +7,9 @@
     primaryColor: '#1a3a6b',     // IBU lacivert
     accentColor:  '#c8a951',     // IBU altın sarısı
     botName:      'IBU Asistan',
+    theme:        'default',     // 'default', 'emerald', 'royal', 'midnight', 'crimson', 'sunset', 'custom'
+    tooltipTr:    'IBU Dijital Asistanı sorularınızı yanıtlamaya hazır. 👋',
+    tooltipEn:    'IBU Digital Assistant is ready to answer your questions. 👋',
     welcomeTr:    'Merhaba! 👋 Kayıt, burslar, programlar veya kampüs hakkında her türlü sorunuzu yanıtlayabilirim.',
     welcomeEn:    'Hello! 👋 I can answer your questions about enrollment, scholarships, programs, or campus life.',
     placeholderTr:'Sorunuzu yazın...',
@@ -29,6 +17,28 @@
     quickRepliesTr: ['📅 Kayıt tarihleri', '🎓 Burs imkânları', '📚 Programlar', '🏠 Yurt & konaklama'],
     quickRepliesEn: ['📅 Enrollment dates', '🎓 Scholarships', '📚 Programs', '🏠 Dormitory'],
   };
+
+  /* ---------- Premium Temalar ---------- */
+  const THEMES = {
+    default:  { primary: '#1a3a6b', accent: '#c8a951' },
+    emerald:  { primary: '#064e3b', accent: '#34d399' },
+    royal:    { primary: '#4c1d95', accent: '#fcd34d' },
+    midnight: { primary: '#0f172a', accent: '#06b6d4' },
+    crimson:  { primary: '#991b1b', accent: '#cbd5e1' },
+    sunset:   { primary: '#7c2d12', accent: '#f59e0b' }
+  };
+
+  const themeName = IBU_CONFIG.theme || 'default';
+  let primaryColor = IBU_CONFIG.primaryColor || '#1a3a6b';
+  let accentColor = IBU_CONFIG.accentColor || '#c8a951';
+
+  if (themeName !== 'custom' && THEMES[themeName]) {
+    primaryColor = THEMES[themeName].primary;
+    accentColor = THEMES[themeName].accent;
+  }
+
+  // Dynamic asset loading
+  const logoUrl = IBU_CONFIG.apiUrl.replace('/api/chat', '/logoicon.ico');
 
   /* ---------- Yardımcı: Dil tespiti ---------- */
   function detectLang(text) {
@@ -48,20 +58,47 @@
     #ibu-chat-fab {
       position: fixed; bottom: 24px; right: 24px; z-index: 99998;
       width: 58px; height: 58px; border-radius: 50%;
-      background: ${IBU_CONFIG.primaryColor};
+      background: ${primaryColor};
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.25);
       transition: transform .2s, box-shadow .2s;
     }
     #ibu-chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
-    #ibu-chat-fab svg { width: 26px; height: 26px; fill: white; }
+    #ibu-chat-fab img { width: 28px; height: 28px; object-fit: contain; }
     #ibu-chat-fab .ibu-badge {
       position: absolute; top: -3px; right: -3px;
       width: 14px; height: 14px; border-radius: 50%;
       background: #ef4444; border: 2px solid white;
       display: none;
     }
+
+    #ibu-chat-tooltip {
+      position: fixed; bottom: 32px; right: 96px; z-index: 99997;
+      background: white; border: 1px solid #e2e8f0;
+      border-radius: 12px; padding: 10px 14px; max-width: 240px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12.5px; color: #334155; line-height: 1.4;
+      display: flex; gap: 8px; align-items: flex-start;
+      opacity: 0; transform: translateX(10px); pointer-events: none;
+      transition: opacity .3s, transform .3s;
+    }
+    #ibu-chat-tooltip.ibu-show {
+      opacity: 1; transform: translateX(0); pointer-events: all;
+    }
+    #ibu-chat-tooltip::after {
+      content: ''; position: absolute; right: -6px; top: calc(50% - 6px);
+      width: 10px; height: 10px; background: white;
+      border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;
+      transform: rotate(45deg);
+    }
+    .ibu-tooltip-close {
+      background: none; border: none; color: #94a3b8; cursor: pointer;
+      font-size: 14px; font-weight: bold; line-height: 1; padding: 0 2px;
+      margin-top: -1px;
+    }
+    .ibu-tooltip-close:hover { color: #64748b; }
 
     #ibu-chat-window {
       position: fixed; bottom: 92px; right: 24px; z-index: 99999;
@@ -82,7 +119,7 @@
     }
 
     .ibu-header {
-      background: ${IBU_CONFIG.primaryColor};
+      background: ${primaryColor};
       padding: 14px 16px;
       display: flex; align-items: center; gap: 10px;
       flex-shrink: 0;
@@ -93,7 +130,7 @@
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    .ibu-avatar svg { width: 20px; height: 20px; fill: white; }
+    .ibu-avatar img { width: 24px; height: 24px; object-fit: contain; }
     .ibu-header-info { flex: 1; }
     .ibu-header-name { color: #fff; font-size: 14px; font-weight: 600; margin: 0; }
     .ibu-header-status {
@@ -119,16 +156,26 @@
 
     .ibu-messages {
       flex: 1; overflow-y: auto; padding: 14px 12px;
-      display: flex; flex-direction: column; gap: 10px;
+      display: flex; flex-direction: column; gap: 12px;
       scroll-behavior: smooth;
     }
     .ibu-messages::-webkit-scrollbar { width: 4px; }
     .ibu-messages::-webkit-scrollbar-track { background: transparent; }
     .ibu-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
 
-    .ibu-msg { display: flex; flex-direction: column; max-width: 84%; }
+    .ibu-msg { display: flex; gap: 8px; max-width: 86%; align-items: flex-start; }
     .ibu-msg.ibu-bot { align-self: flex-start; }
-    .ibu-msg.ibu-user { align-self: flex-end; }
+    .ibu-msg.ibu-user { align-self: flex-end; flex-direction: row-reverse; }
+
+    .ibu-msg-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #f1f5f9; border: 1px solid #e2e8f0;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .ibu-msg-avatar img { width: 18px; height: 18px; object-fit: contain; }
+
+    .ibu-bubble-wrapper { display: flex; flex-direction: column; flex: 1; }
 
     .ibu-bubble {
       padding: 9px 13px; border-radius: 14px;
@@ -137,21 +184,21 @@
     }
     .ibu-bot .ibu-bubble {
       background: #f1f5f9; color: #1e293b;
-      border-bottom-left-radius: 3px;
+      border-top-left-radius: 3px;
     }
     .ibu-user .ibu-bubble {
-      background: ${IBU_CONFIG.primaryColor}; color: #fff;
-      border-bottom-right-radius: 3px;
+      background: ${primaryColor}; color: #fff;
+      border-top-right-radius: 3px;
     }
     .ibu-time {
       font-size: 10px; color: #94a3b8;
-      margin-top: 3px; padding: 0 4px;
+      margin-top: 4px; padding: 0 2px;
     }
     .ibu-user .ibu-time { text-align: right; }
 
     .ibu-typing-bubble {
       display: flex; gap: 5px; align-items: center; padding: 12px 14px;
-      background: #f1f5f9; border-radius: 14px; border-bottom-left-radius: 3px;
+      background: #f1f5f9; border-radius: 14px; border-top-left-radius: 3px;
       max-width: 60px;
     }
     .ibu-typing-bubble span {
@@ -170,12 +217,12 @@
       display: flex; flex-wrap: wrap; gap: 6px;
     }
     .ibu-qr {
-      background: none; border: 1px solid ${IBU_CONFIG.primaryColor};
-      color: ${IBU_CONFIG.primaryColor}; border-radius: 16px;
+      background: none; border: 1px solid ${primaryColor};
+      color: ${primaryColor}; border-radius: 16px;
       padding: 5px 11px; font-size: 11.5px; cursor: pointer;
       transition: background .15s, color .15s; white-space: nowrap;
     }
-    .ibu-qr:hover { background: ${IBU_CONFIG.primaryColor}; color: white; }
+    .ibu-qr:hover { background: ${primaryColor}; color: white; }
 
     .ibu-input-row {
       padding: 10px 12px 12px;
@@ -192,11 +239,11 @@
       transition: border-color .15s;
       overflow-y: auto;
     }
-    .ibu-input:focus { border-color: ${IBU_CONFIG.primaryColor}; background: #fff; }
+    .ibu-input:focus { border-color: ${primaryColor}; background: #fff; }
     .ibu-input::placeholder { color: #94a3b8; }
     .ibu-send {
       width: 38px; height: 38px; border-radius: 50%;
-      background: ${IBU_CONFIG.primaryColor}; border: none; cursor: pointer;
+      background: ${primaryColor}; border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; transition: opacity .15s, transform .15s;
     }
@@ -212,6 +259,7 @@
     @media (max-width: 480px) {
       #ibu-chat-window { width: calc(100vw - 16px); right: 8px; bottom: 80px; }
       #ibu-chat-fab { right: 16px; bottom: 16px; }
+      #ibu-chat-tooltip { right: 84px; bottom: 24px; max-width: 200px; }
     }
   `;
   document.head.appendChild(style);
@@ -221,10 +269,18 @@
   fab.id = 'ibu-chat-fab';
   fab.setAttribute('aria-label', 'IBU Chatbot');
   fab.innerHTML = `
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 10H6V10h12v2zm0-4H6V6h12v2z"/>
-    </svg>
+    <img src="${logoUrl}" alt="IBU" />
     <span class="ibu-badge"></span>
+  `;
+
+  // Closed Welcoming Notification Tooltip next to FAB
+  const tooltip = document.createElement('div');
+  tooltip.id = 'ibu-chat-tooltip';
+  tooltip.innerHTML = `
+    <div style="flex: 1; font-weight: 500;">
+      ${currentLang === 'tr' ? IBU_CONFIG.tooltipTr : IBU_CONFIG.tooltipEn}
+    </div>
+    <button class="ibu-tooltip-close" aria-label="Kapat">✕</button>
   `;
 
   const win = document.createElement('div');
@@ -234,7 +290,7 @@
   win.innerHTML = `
     <div class="ibu-header">
       <div class="ibu-avatar">
-        <svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+        <img src="${logoUrl}" alt="IBU" />
       </div>
       <div class="ibu-header-info">
         <p class="ibu-header-name">${IBU_CONFIG.botName}</p>
@@ -258,6 +314,7 @@
   `;
 
   document.body.appendChild(fab);
+  document.body.appendChild(tooltip);
   document.body.appendChild(win);
 
   /* ---------- DOM refs ---------- */
@@ -281,10 +338,27 @@
   function addMessage(text, role) {
     const div = document.createElement('div');
     div.className = `ibu-msg ibu-${role}`;
-    div.innerHTML = `
-      <div class="ibu-bubble">${text.replace(/\n/g, '<br>')}</div>
-      <div class="ibu-time">${now()}</div>
-    `;
+    
+    if (role === 'bot') {
+      // Robot avatar next to bot message bubble
+      div.innerHTML = `
+        <div class="ibu-msg-avatar">
+          <img src="${logoUrl}" alt="Bot" />
+        </div>
+        <div class="ibu-bubble-wrapper">
+          <div class="ibu-bubble">${text.replace(/\n/g, '<br>')}</div>
+          <div class="ibu-time">${now()}</div>
+        </div>
+      `;
+    } else {
+      div.innerHTML = `
+        <div class="ibu-bubble-wrapper">
+          <div class="ibu-bubble">${text.replace(/\n/g, '<br>')}</div>
+          <div class="ibu-time">${now()}</div>
+        </div>
+      `;
+    }
+    
     messagesEl.appendChild(div);
     scrollDown();
     return div;
@@ -294,7 +368,14 @@
     const div = document.createElement('div');
     div.className = 'ibu-msg ibu-bot';
     div.id = 'ibu-typing';
-    div.innerHTML = `<div class="ibu-typing-bubble"><span></span><span></span><span></span></div>`;
+    div.innerHTML = `
+      <div class="ibu-msg-avatar">
+        <img src="${logoUrl}" alt="Bot" />
+      </div>
+      <div class="ibu-bubble-wrapper">
+        <div class="ibu-typing-bubble"><span></span><span></span><span></span></div>
+      </div>
+    `;
     messagesEl.appendChild(div);
     scrollDown();
   }
@@ -318,40 +399,56 @@
 
   /* ---------- Mesaj gönder (streaming) ---------- */
   async function sendMessage(text) {
-    if (isTyping || !text.trim()) return;
+    if (isTyping) return;
     isTyping = true;
     sendBtn.disabled = true;
+
+    // 1. Kullanıcı mesajı ekle
+    addMessage(text, 'user');
     qrEl.innerHTML = '';
 
+    // Dil algıla ve placeholder/quick replies güncelle
     const detected = detectLang(text);
-    currentLang = detected;
-    inputEl.placeholder = detected === 'tr' ? IBU_CONFIG.placeholderTr : IBU_CONFIG.placeholderEn;
+    if (detected !== currentLang) {
+      currentLang = detected;
+      inputEl.placeholder = currentLang === 'tr' ? IBU_CONFIG.placeholderTr : IBU_CONFIG.placeholderEn;
+    }
 
-    addMessage(text, 'user');
-    history.push({ role: 'user', content: text });
-
+    // 2. Yazıyor animasyonunu göster
     showTyping();
 
+    // 3. API çağrısı
     try {
+      const historyPayload = history.map(h => ({ role: h.role, content: h.content }));
+      history.push({ role: 'user', content: text });
+
       const resp = await fetch(IBU_CONFIG.apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message:    text,
-          session_id: sessionId,
-          page_url:   window.location.href,
-          history:    history.slice(-8),
+          message: text,
+          sessionId,
+          history: historyPayload,
+          lang: currentLang,
         }),
       });
 
-      if (!resp.ok) throw new Error('API hatası: ' + resp.status);
+      if (!resp.ok) throw new Error('API request failed');
 
       removeTyping();
 
       // Bot mesaj balonu (streaming için)
       const botDiv = document.createElement('div');
       botDiv.className = 'ibu-msg ibu-bot';
-      botDiv.innerHTML = `<div class="ibu-bubble"></div><div class="ibu-time">${now()}</div>`;
+      botDiv.innerHTML = `
+        <div class="ibu-msg-avatar">
+          <img src="${logoUrl}" alt="Bot" />
+        </div>
+        <div class="ibu-bubble-wrapper">
+          <div class="ibu-bubble"></div>
+          <div class="ibu-time">${now()}</div>
+        </div>
+      `;
       messagesEl.appendChild(botDiv);
       const bubbleEl = botDiv.querySelector('.ibu-bubble');
 
@@ -401,6 +498,10 @@
   fab.addEventListener('click', () => {
     isOpen = !isOpen;
     win.classList.toggle('ibu-open', isOpen);
+    
+    // Hide welcome tooltip upon open
+    tooltip.classList.remove('ibu-show');
+    
     if (isOpen && messagesEl.children.length === 0) {
       // İlk açılışta hoşgeldin mesajı + hızlı cevaplar
       addMessage(IBU_CONFIG.welcomeTr, 'bot');
@@ -440,5 +541,19 @@
       win.classList.remove('ibu-open');
     }
   });
+
+  // Tooltip close button handler
+  tooltip.querySelector('.ibu-tooltip-close').addEventListener('click', (e) => {
+    e.stopPropagation();
+    tooltip.classList.remove('ibu-show');
+    localStorage.setItem('ibu-chat-tooltip-dismissed', 'true');
+  });
+
+  // Display closed welcome notification after a small delay
+  setTimeout(() => {
+    if (!isOpen && !localStorage.getItem('ibu-chat-tooltip-dismissed')) {
+      tooltip.classList.add('ibu-show');
+    }
+  }, 3000);
 
 })();

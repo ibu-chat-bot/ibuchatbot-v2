@@ -1,15 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sliders, Copy, FileDown, Eye, Check, HelpCircle, Code, ShieldCheck } from 'lucide-react'
+import { Sliders, Copy, FileDown, Eye, Check, HelpCircle, Code, ShieldCheck, Palette } from 'lucide-react'
 
 export default function WidgetPage() {
   // Widget states
-  const [apiUrl, setApiUrl] = useState('https://yelqghcavbihvodedpls.supabase.co/api/chat') // default
+  const [apiUrl, setApiUrl] = useState('https://ibuchatbot-v2.vercel.app/api/chat') // default
   const [botName, setBotName] = useState('IBU Asistan')
+  const [theme, setTheme] = useState('default')
   const [primaryColor, setPrimaryColor] = useState('#1a3a6b')
   const [accentColor, setAccentColor] = useState('#c8a951')
   const [position, setPosition] = useState('bottom-right')
+  
+  const [tooltipTr, setTooltipTr] = useState('IBU Dijital Asistanı sorularınızı yanıtlamaya hazır. 👋')
+  const [tooltipEn, setTooltipEn] = useState('IBU Digital Assistant is ready to answer your questions. 👋')
   
   const [welcomeTr, setWelcomeTr] = useState('Merhaba! 👋 Kayıt, burslar, programlar veya kampüs hakkında her türlü sorunuzu yanıtlayabilirim.')
   const [welcomeEn, setWelcomeEn] = useState('Hello! 👋 I can answer your questions about enrollment, scholarships, programs, or campus life.')
@@ -33,6 +37,25 @@ export default function WidgetPage() {
   const [messages, setMessages] = useState([])
   const [typing, setTyping] = useState(false)
 
+  // Premium themes specs
+  const THEMES = {
+    default:  { name: 'Corporate Navy (Klasik)', primary: '#1a3a6b', accent: '#c8a951' },
+    emerald:  { name: 'Emerald Garden (Zümrüt Yeşil)', primary: '#064e3b', accent: '#34d399' },
+    royal:    { name: 'Royal Amethyst (Lüks Mor)', primary: '#4c1d95', accent: '#fcd34d' },
+    midnight: { name: 'Midnight Stealth (Karanlık Tema)', primary: '#0f172a', accent: '#06b6d4' },
+    crimson:  { name: 'Crimson Spark (Yakut Kırmızı)', primary: '#991b1b', accent: '#cbd5e1' },
+    sunset:   { name: 'Sunset Amber (Günbatımı Turuncu)', primary: '#7c2d12', accent: '#f59e0b' },
+    custom:   { name: 'Özel Renkler', primary: '#1a3a6b', accent: '#c8a951' }
+  }
+
+  // Update colors when preset theme is selected
+  useEffect(() => {
+    if (theme !== 'custom' && THEMES[theme]) {
+      setPrimaryColor(THEMES[theme].primary)
+      setAccentColor(THEMES[theme].accent)
+    }
+  }, [theme])
+
   // Dynamically set apiUrl to local host when loading client-side
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -53,6 +76,9 @@ export default function WidgetPage() {
           primaryColor,
           accentColor,
           position,
+          theme,
+          tooltipTr,
+          tooltipEn,
           welcomeTr,
           welcomeEn,
           quickRepliesTr,
@@ -78,7 +104,7 @@ export default function WidgetPage() {
       generateWidgetCode()
     }, 800)
     return () => clearTimeout(debouncer)
-  }, [apiUrl, botName, primaryColor, accentColor, position, welcomeTr, welcomeEn, quickRepliesTr, quickRepliesEn])
+  }, [apiUrl, botName, primaryColor, accentColor, position, theme, tooltipTr, tooltipEn, welcomeTr, welcomeEn, quickRepliesTr, quickRepliesEn])
 
   // Setup simulated initial messages on toggle or language change
   useEffect(() => {
@@ -119,6 +145,9 @@ export default function WidgetPage() {
           primaryColor,
           accentColor,
           position,
+          theme,
+          tooltipTr,
+          tooltipEn,
           welcomeTr,
           welcomeEn,
           quickRepliesTr,
@@ -186,6 +215,35 @@ export default function WidgetPage() {
 
           {/* Core Configuration */}
           <div className="space-y-4">
+            {/* Premium Themes Selector */}
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+              <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider flex items-center gap-1.5">
+                <Palette className="w-4 h-4 text-[#1a3a6b]" />
+                <span>👑 Ultra Premium Görünüm Temaları</span>
+              </label>
+              
+              <div className="grid grid-cols-2 gap-2">
+                {Object.keys(THEMES).map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setTheme(key)}
+                    className={`flex flex-col text-left p-2.5 rounded-lg border text-[11px] font-semibold transition active:scale-[0.98] cursor-pointer ${
+                      theme === key 
+                        ? 'border-[#1a3a6b] bg-blue-50/50 shadow-sm text-slate-800' 
+                        : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="font-bold text-[11px]">{THEMES[key].name}</span>
+                    <div className="flex gap-1.5 items-center mt-2">
+                      <div className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: THEMES[key].primary }} />
+                      <div className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: THEMES[key].accent }} />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Bot Adı</label>
@@ -220,47 +278,74 @@ export default function WidgetPage() {
               />
             </div>
 
-            {/* Colors picker */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Ana Renk (Primary)</label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="w-8 h-8 rounded-lg cursor-pointer border border-slate-205 p-0"
-                  />
-                  <input
-                    type="text"
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="flex-1 bg-slate-50 border border-slate-200 text-xs py-1.5 px-2 rounded-lg font-mono"
-                  />
+            {/* Colors picker - Only show inputs if custom is chosen */}
+            {theme === 'custom' && (
+              <div className="grid grid-cols-2 gap-4 animate-fadeIn">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Ana Renk (Primary)</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="w-8 h-8 rounded-lg cursor-pointer border border-slate-205 p-0"
+                    />
+                    <input
+                      type="text"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 text-xs py-1.5 px-2 rounded-lg font-mono"
+                    />
+                  </div>
                 </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">İkincil Renk (Accent)</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={accentColor}
+                      onChange={(e) => setAccentColor(e.target.value)}
+                      className="w-8 h-8 rounded-lg cursor-pointer border border-slate-205 p-0"
+                    />
+                    <input
+                      type="text"
+                      value={accentColor}
+                      onChange={(e) => setAccentColor(e.target.value)}
+                      className="flex-1 bg-slate-50 border border-slate-200 text-xs py-1.5 px-2 rounded-lg font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Welcome notification closed tooltip */}
+            <div className="space-y-4 pt-4 border-t border-slate-100">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">💬 Sohbet Bildirim Balonu (FAB Tooltip)</span>
+              
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Türkçe Bildirim Metni</label>
+                <textarea
+                  rows={2}
+                  value={tooltipTr}
+                  onChange={(e) => setTooltipTr(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-600 resize-none font-medium"
+                />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">İkincil Renk (Accent)</label>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="color"
-                    value={accentColor}
-                    onChange={(e) => setAccentColor(e.target.value)}
-                    className="w-8 h-8 rounded-lg cursor-pointer border border-slate-205 p-0"
-                  />
-                  <input
-                    type="text"
-                    value={accentColor}
-                    onChange={(e) => setAccentColor(e.target.value)}
-                    className="flex-1 bg-slate-50 border border-slate-200 text-xs py-1.5 px-2 rounded-lg font-mono"
-                  />
-                </div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">İngilizce Bildirim Metni</label>
+                <textarea
+                  rows={2}
+                  value={tooltipEn}
+                  onChange={(e) => setTooltipEn(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-600 resize-none font-medium"
+                />
               </div>
             </div>
 
             {/* Welcome messages */}
-            <div className="space-y-4 pt-2 border-t border-slate-100">
+            <div className="space-y-4 pt-4 border-t border-slate-100">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">Karşılama Mesajları</span>
               
               <div>
@@ -320,7 +405,7 @@ export default function WidgetPage() {
                       setQuickRepliesTr([...quickRepliesTr, newQuickTr.trim()])
                       setNewQuickTr('')
                     }}
-                    className="px-3 bg-[#1a3a6b] hover:bg-[#152d57] text-white rounded-lg text-xs font-bold transition"
+                    className="px-3 bg-[#1a3a6b] hover:bg-[#152d57] text-white rounded-lg text-xs font-bold transition cursor-pointer"
                   >
                     Ekle
                   </button>
@@ -359,7 +444,7 @@ export default function WidgetPage() {
                       setQuickRepliesEn([...quickRepliesEn, newQuickEn.trim()])
                       setNewQuickEn('')
                     }}
-                    className="px-3 bg-[#1a3a6b] hover:bg-[#152d57] text-white rounded-lg text-xs font-bold transition"
+                    className="px-3 bg-[#1a3a6b] hover:bg-[#152d57] text-white rounded-lg text-xs font-bold transition cursor-pointer"
                   >
                     Ekle
                   </button>
@@ -388,14 +473,48 @@ export default function WidgetPage() {
           <div className="flex-1 p-8 flex flex-col justify-center items-center text-center bg-slate-50 relative select-none">
             <h3 className="font-outfit font-extrabold text-base text-slate-400">Uluslararası Balkan Üniversitesi</h3>
             <p className="text-[11px] text-slate-350 mt-1 max-w-sm leading-relaxed">
-              Widget Canlı Önizlemesi. Sağ alttaki ikon butonuna tıklayarak sohbet penceresini test edebilirsiniz.
+              Widget Canlı Önizlemesi. İkon butonuna tıklayarak yeni özellikleri test edebilirsiniz.
             </p>
 
+            {/* Welcoming Closed Tooltip Speech Bubble callout notification */}
+            {!widgetOpen && (
+              <div
+                className="absolute z-40 bg-white border border-slate-200 p-2.5 rounded-xl shadow-lg flex gap-2 items-start transition-all animate-bounce max-w-[200px]"
+                style={{
+                  bottom: '32px',
+                  right: position === 'bottom-right' ? '92px' : 'auto',
+                  left: position === 'bottom-left' ? '92px' : 'auto',
+                  fontSize: '11px',
+                  lineHeight: '1.35',
+                  color: '#334155',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                }}
+              >
+                <div className="flex-1 font-semibold">
+                  {simLang === 'tr' ? tooltipTr : tooltipEn}
+                </div>
+                <div className="text-[10px] text-slate-350 cursor-pointer font-bold hover:text-slate-500">&times;</div>
+                <div
+                  className="absolute bg-white border-t border-r border-slate-200 w-2 h-2 rotate-45"
+                  style={{
+                    top: 'calc(50% - 4px)',
+                    right: position === 'bottom-right' ? '-5px' : 'auto',
+                    left: position === 'bottom-left' ? '-5px' : 'auto',
+                    borderLeft: position === 'bottom-left' ? '1px solid #e2e8f0' : 'none',
+                    borderBottom: position === 'bottom-left' ? '1px solid #e2e8f0' : 'none',
+                    borderTop: position === 'bottom-right' ? '1px solid #e2e8f0' : 'none',
+                    borderRight: position === 'bottom-right' ? '1px solid #e2e8f0' : 'none',
+                  }}
+                ></div>
+              </div>
+            )}
+
             {/* Simulated Live Widget elements inline absolute inside the page */}
-            {/* SO Sohbet FAB Button */}
+            {/* SO Sohbet FAB Button with local icon */}
             <button
               onClick={() => setWidgetOpen(!widgetOpen)}
-              className="absolute z-40 transition-transform active:scale-95 shadow-xl hover:scale-105 border-0 cursor-pointer flex items-center justify-center"
+              className="absolute z-40 transition-transform active:scale-95 shadow-xl hover:scale-105 border-0 cursor-pointer flex items-center justify-center overflow-hidden"
               style={{
                 bottom: '24px',
                 right: position === 'bottom-right' ? '24px' : 'auto',
@@ -406,9 +525,7 @@ export default function WidgetPage() {
                 backgroundColor: primaryColor,
               }}
             >
-              <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
-                <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
-              </svg>
+              <img src="/logoicon.ico" alt="Logo" className="w-7 h-7 object-contain" />
             </button>
 
             {/* SO Sohbet Penceresi */}
@@ -425,11 +542,11 @@ export default function WidgetPage() {
                   overflow: 'hidden',
                 }}
               >
-                {/* Header */}
+                {/* Header with logoicon.ico */}
                 <div className="p-4 text-white flex items-center justify-between shadow-md" style={{ backgroundColor: primaryColor }}>
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center font-bold font-outfit text-sm">
-                      IBU
+                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
+                      <img src="/logoicon.ico" alt="IBU" className="w-6 h-6 object-contain" />
                     </div>
                     <div>
                       <h4 className="text-xs font-bold">{botName}</h4>
@@ -458,20 +575,22 @@ export default function WidgetPage() {
                 <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-[11px]">
                   {messages.map((m, idx) => (
                     <div key={idx} className={`flex gap-2 items-start ${m.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                      <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[8px] flex-shrink-0 ${
-                          m.sender === 'user' ? 'bg-slate-300 text-slate-800' : 'text-white'
-                        }`}
-                        style={{ backgroundColor: m.sender === 'bot' ? accentColor : '' }}
-                      >
-                        {m.sender === 'user' ? 'U' : 'B'}
-                      </div>
+                      {m.sender === 'bot' ? (
+                        <div className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <img src="/logoicon.ico" alt="Bot" className="w-3.5 h-3.5 object-contain" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-slate-300 text-slate-800 flex items-center justify-center font-bold text-[8px] flex-shrink-0">
+                          U
+                        </div>
+                      )}
                       <div
                         className={`p-2.5 rounded-xl max-w-[80%] leading-relaxed ${
                           m.sender === 'user' 
-                            ? 'bg-slate-200 text-slate-800 rounded-tr-none' 
+                            ? 'text-white rounded-tr-none' 
                             : 'bg-white text-slate-700 shadow-sm rounded-tl-none border border-slate-100'
                         }`}
+                        style={{ backgroundColor: m.sender === 'user' ? primaryColor : '' }}
                       >
                         {m.text}
                       </div>
@@ -481,8 +600,8 @@ export default function WidgetPage() {
                   {/* Typing animation bubble */}
                   {typing && (
                     <div className="flex gap-2 items-start">
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] flex-shrink-0" style={{ backgroundColor: accentColor }}>
-                        B
+                      <div className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <img src="/logoicon.ico" alt="Bot" className="w-3.5 h-3.5 object-contain" />
                       </div>
                       <div className="bg-white border border-slate-100 p-2.5 rounded-xl rounded-tl-none flex gap-1 items-center">
                         <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
@@ -534,7 +653,7 @@ export default function WidgetPage() {
             {/* Primary Action Button */}
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 bg-[#1a3a6b] hover:bg-[#152d57] active:scale-[0.98] text-white font-semibold py-2 px-4 rounded-lg text-xs shadow-md transition"
+              className="flex items-center gap-1.5 bg-[#1a3a6b] hover:bg-[#152d57] active:scale-[0.98] text-white font-semibold py-2 px-4 rounded-lg text-xs shadow-md transition cursor-pointer"
             >
               {copied ? <Check className="w-4 h-4 text-ibu-gold" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? 'Kopyalandı! ✓' : 'Kodu Kopyala'}</span>
@@ -543,7 +662,7 @@ export default function WidgetPage() {
             {/* Secondary Action - Outline Variant */}
             <button
               onClick={handleDownloadJs}
-              className="flex items-center gap-1.5 border border-[#1a3a6b] text-[#1a3a6b] hover:bg-slate-50 font-semibold py-2 px-4 rounded-lg text-xs transition"
+              className="flex items-center gap-1.5 border border-[#1a3a6b] text-[#1a3a6b] hover:bg-slate-50 font-semibold py-2 px-4 rounded-lg text-xs transition cursor-pointer"
             >
               <FileDown className="w-4 h-4" />
               <span>.js Dosyası İndir</span>
@@ -551,7 +670,7 @@ export default function WidgetPage() {
 
             <button
               onClick={handleDownloadPlugin}
-              className="flex items-center gap-1.5 bg-ibu-gold hover:bg-ibu-gold/90 text-[#1a3a6b] font-bold py-2 px-4 rounded-lg text-xs shadow-md transition"
+              className="flex items-center gap-1.5 bg-ibu-gold hover:bg-ibu-gold/90 text-[#1a3a6b] font-bold py-2 px-4 rounded-lg text-xs shadow-md transition cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>WordPress Eklentisi İndir (.ZIP)</span>
