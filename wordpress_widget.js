@@ -61,7 +61,7 @@
 #ibu-tooltip .tc{background:#f1f5f9;border:none;width:22px;height:22px;min-width:22px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#64748b;transition:all .2s;}
 #ibu-tooltip .tc:hover{background:#e2e8f0;color:#1e293b;}
 
-#ibu-win{position:fixed;bottom:100px;right:24px;z-index:99999;width:390px;height:600px;background:#f1f5f9;border-radius:28px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.16),0 8px 24px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04);transform:scale(.88) translateY(24px);transform-origin:bottom right;opacity:0;pointer-events:none;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .25s ease;font-family:'Inter',sans-serif;}
+#ibu-win{position:fixed;bottom:100px;right:24px;z-index:99999;width:390px;height:600px;background:#ffffff;border-radius:28px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.16),0 8px 24px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04);transform:scale(.88) translateY(24px);transform-origin:bottom right;opacity:0;pointer-events:none;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .25s ease;font-family:'Inter',sans-serif;}
 #ibu-win.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
 
 .ibu-hdr{background:linear-gradient(150deg,${pc} 0%,rgb(${Math.max(0,r-45)},${Math.max(0,g-45)},${Math.max(0,b-45)}) 100%);padding:20px 18px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;overflow:hidden;}
@@ -77,27 +77,47 @@
 .ibu-xbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.9);font-size:14px;transition:all .2s;backdrop-filter:blur(8px);}
 .ibu-xbtn:hover{background:rgba(255,255,255,.25);transform:rotate(90deg);}
 
-.ibu-msgs{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth;}
+.ibu-msgs{flex:1;overflow-y:auto;padding:18px 14px 12px;display:flex;flex-direction:column;gap:2px;scroll-behavior:smooth;background:#ffffff;background-image:radial-gradient(circle at 1px 1px,rgba(${r},${g},${b},.04) 1px,transparent 0);background-size:20px 20px;}
 .ibu-msgs::-webkit-scrollbar{width:3px;}
 .ibu-msgs::-webkit-scrollbar-track{background:transparent;}
-.ibu-msgs::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
+.ibu-msgs::-webkit-scrollbar-thumb{background:rgba(${r},${g},${b},.2);border-radius:4px;}
 
-.ibu-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:2px;}
-.ibu-row.usr{flex-direction:row-reverse;}
-.ibu-row.bot-row + .ibu-row.bot-row .ibu-bav,.ibu-row.bot-row + .ibu-row.bot-row ~ .ibu-row.bot-row .ibu-bav{visibility:hidden;}
+.ibu-group{display:flex;flex-direction:column;gap:2px;margin-bottom:14px;}
+.ibu-group.grp-usr{align-items:flex-end;}
+.ibu-group.grp-bot{align-items:flex-start;}
 
-.ibu-bav{width:34px;height:34px;min-width:34px;border-radius:50%;background:linear-gradient(145deg,${pc},rgb(${Math.max(0,r-30)},${Math.max(0,g-30)},${Math.max(0,b-30)}));display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(${r},${g},${b},.35);}
-.ibu-bav img{width:19px;height:19px;object-fit:contain;filter:brightness(0) invert(1);}
+.ibu-group-hd{display:flex;align-items:center;gap:9px;margin-bottom:6px;}
+.ibu-group.grp-usr .ibu-group-hd{flex-direction:row-reverse;}
 
-.ibu-bub{max-width:72%;padding:11px 15px;border-radius:20px;font-size:13.5px;line-height:1.6;word-break:break-word;font-weight:450;animation:ibu-in .25s ease-out;}
-@keyframes ibu-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-.bot .ibu-bub{background:#fff;color:#1e293b;border-radius:20px 20px 20px 5px;box-shadow:0 2px 12px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.03);}
-.usr .ibu-bub{background:linear-gradient(145deg,${pc},rgb(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)}));color:#fff;border-radius:20px 20px 5px 20px;box-shadow:0 4px 16px rgba(${r},${g},${b},.35);}
-.ibu-ts{font-size:10px;color:#94a3b8;margin-top:5px;font-weight:500;padding:0 4px;}
-.usr .ibu-ts{text-align:right;}
+.ibu-bav{width:36px;height:36px;min-width:36px;border-radius:50%;background:linear-gradient(145deg,${pc},rgb(${Math.max(0,r-40)},${Math.max(0,g-40)},${Math.max(0,b-40)}));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(${r},${g},${b},.4),0 0 0 2px rgba(${r},${g},${b},.12);flex-shrink:0;}
+.ibu-bav img{width:20px;height:20px;object-fit:contain;filter:brightness(0) invert(1);}
 
-.ibu-typing{display:flex;gap:6px;align-items:center;padding:12px 16px;background:#fff;border-radius:20px 20px 20px 5px;box-shadow:0 2px 12px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.03);width:fit-content;}
-.ibu-typing span{width:7px;height:7px;background:#94a3b8;border-radius:50%;animation:ibu-b 1.4s infinite;}
+.ibu-sender{font-size:11px;font-weight:700;color:${pc};letter-spacing:.01em;opacity:.85;}
+
+.ibu-bub-wrap{display:flex;flex-direction:column;gap:2px;max-width:78%;}
+.grp-usr .ibu-bub-wrap{align-items:flex-end;}
+.grp-bot .ibu-bub-wrap{align-items:flex-start;padding-left:45px;}
+
+.ibu-bub{padding:11px 15px;font-size:13.5px;line-height:1.65;word-break:break-word;font-weight:400;animation:ibu-in .22s cubic-bezier(.16,1,.3,1);position:relative;}
+@keyframes ibu-in{from{opacity:0;transform:translateY(10px) scale(.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+
+.grp-bot .ibu-bub{background:#f0f4ff;color:#1e293b;border-radius:4px 18px 18px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.grp-bot .ibu-bub:first-child{border-radius:18px 18px 18px 4px;}
+.grp-bot .ibu-bub:only-child{border-radius:4px 18px 18px 18px;}
+
+.grp-usr .ibu-bub{background:linear-gradient(135deg,${pc} 0%,rgb(${Math.max(0,r-45)},${Math.max(0,g-45)},${Math.max(0,b-45)}) 100%);color:#fff;border-radius:18px 4px 18px 18px;box-shadow:0 4px 18px rgba(${r},${g},${b},.38);}
+.grp-usr .ibu-bub:last-child{border-radius:18px 4px 4px 18px;}
+.grp-usr .ibu-bub:only-child{border-radius:18px 4px 18px 18px;}
+
+.ibu-ts-group{font-size:10px;color:#94a3b8;font-weight:500;margin-top:3px;padding:0 2px;}
+.grp-usr .ibu-ts-group{text-align:right;}
+
+.ibu-day-sep{text-align:center;margin:12px 0 6px;}
+.ibu-day-pill{display:inline-block;background:rgba(${r},${g},${b},.07);color:${pc};font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;}
+
+.ibu-typing-wrap{display:flex;align-items:center;gap:9px;padding-left:0;margin-bottom:10px;animation:ibu-in .22s ease;}
+.ibu-typing{display:flex;gap:5px;align-items:center;padding:13px 18px;background:#f0f4ff;border-radius:4px 18px 18px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.ibu-typing span{width:7px;height:7px;background:rgba(${r},${g},${b},.5);border-radius:50%;animation:ibu-b 1.4s infinite;}
 .ibu-typing span:nth-child(2){animation-delay:.15s;}
 .ibu-typing span:nth-child(3){animation-delay:.3s;}
 @keyframes ibu-b{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-7px);}}
@@ -186,29 +206,41 @@
   function scroll() { setTimeout(() => { msgsEl.scrollTop = msgsEl.scrollHeight; }, 30); }
 
   function addMsg(text, role) {
-    const row = document.createElement('div');
-    row.className = `ibu-row ${role === 'bot' ? 'bot-row bot' : 'usr'}`;
+    const group = document.createElement('div');
+    group.className = `ibu-group ${role === 'bot' ? 'grp-bot' : 'grp-usr'}`;
     if (role === 'bot') {
-      row.innerHTML = `<div class="ibu-bav"><img src="${logoUrl}" alt="B"></div><div><div class="ibu-bub">${text.replace(/\n/g,'<br>')}</div><div class="ibu-ts">${ts()}</div></div>`;
+      group.innerHTML = `
+        <div class="ibu-group-hd">
+          <div class="ibu-bav"><img src="${logoUrl}" alt="IBU"></div>
+          <span class="ibu-sender">${IBU_CONFIG.botName}</span>
+        </div>
+        <div class="ibu-bub-wrap">
+          <div class="ibu-bub">${text.replace(/\n/g,'<br>')}</div>
+          <div class="ibu-ts-group">${ts()}</div>
+        </div>`;
     } else {
-      row.innerHTML = `<div><div class="ibu-bub">${text.replace(/\n/g,'<br>')}</div><div class="ibu-ts">${ts()}</div></div>`;
+      group.innerHTML = `
+        <div class="ibu-bub-wrap">
+          <div class="ibu-bub">${text.replace(/\n/g,'<br>')}</div>
+          <div class="ibu-ts-group">${ts()}</div>
+        </div>`;
     }
-    msgsEl.appendChild(row);
+    msgsEl.appendChild(group);
     scroll();
-    return row;
+    return group;
   }
 
   function showTyp() {
-    const row = document.createElement('div');
-    row.className = 'ibu-row bot-row bot';
-    row.id = 'ibu-typ';
-    row.innerHTML = `<div class="ibu-bav"><img src="${logoUrl}" alt="B"></div><div class="ibu-typing"><span></span><span></span><span></span></div>`;
-    msgsEl.appendChild(row);
+    const wrap = document.createElement('div');
+    wrap.id = 'ibu-typ';
+    wrap.className = 'ibu-typing-wrap';
+    wrap.innerHTML = `<div class="ibu-bav"><img src="${logoUrl}" alt="B"></div><div class="ibu-typing"><span></span><span></span><span></span></div>`;
+    msgsEl.appendChild(wrap);
     scroll();
   }
   function hideTyp() { const t = document.getElementById('ibu-typ'); if (t) t.remove(); }
 
-  function addSuggs(botRow, list) {
+  function addSuggs(botGroup, list) {
     const wrap = document.createElement('div');
     wrap.className = 'ibu-sug-wrap';
     const lbl = document.createElement('div');
@@ -225,7 +257,8 @@
       lst.appendChild(btn);
     });
     wrap.appendChild(lst);
-    botRow.parentNode.insertBefore(wrap, botRow.nextSibling);
+    // Insert after the bot group
+    botGroup.insertAdjacentElement('afterend', wrap);
     scroll();
   }
 
@@ -270,11 +303,19 @@
       if (!resp.ok) throw new Error('fail');
       hideTyp();
 
-      const botRow = document.createElement('div');
-      botRow.className = 'ibu-row bot-row bot';
-      botRow.innerHTML = `<div class="ibu-bav"><img src="${logoUrl}" alt="B"></div><div><div class="ibu-bub"></div><div class="ibu-ts">${ts()}</div></div>`;
-      msgsEl.appendChild(botRow);
-      const bub = botRow.querySelector('.ibu-bub');
+      const botGroup = document.createElement('div');
+      botGroup.className = 'ibu-group grp-bot';
+      botGroup.innerHTML = `
+        <div class="ibu-group-hd">
+          <div class="ibu-bav"><img src="${logoUrl}" alt="IBU"></div>
+          <span class="ibu-sender">${IBU_CONFIG.botName}</span>
+        </div>
+        <div class="ibu-bub-wrap">
+          <div class="ibu-bub"></div>
+          <div class="ibu-ts-group">${ts()}</div>
+        </div>`;
+      msgsEl.appendChild(botGroup);
+      const bub = botGroup.querySelector('.ibu-bub');
 
       const reader = resp.body.getReader();
       const dec = new TextDecoder();
@@ -290,7 +331,7 @@
             if (d.text) { full += d.text; bub.innerHTML = full.replace(/\n/g,'<br>'); scroll(); }
             if (d.done) {
               lang = d.lang || lang;
-              if (d.suggestions?.length) addSuggs(botRow, d.suggestions);
+              if (d.suggestions?.length) addSuggs(botGroup, d.suggestions);
             }
           } catch {}
         }
