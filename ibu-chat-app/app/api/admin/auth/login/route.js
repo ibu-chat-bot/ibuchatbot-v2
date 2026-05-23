@@ -5,7 +5,10 @@ export async function POST(req) {
     const { username, password } = await req.json()
     const expectedUsername = process.env.ADMIN_USERNAME || 'ibu_admin'
 
+    console.log(`[DEBUG LOGIN] Attempting login: Input Username='${username}', Expected='${expectedUsername}'`)
+
     if (username !== expectedUsername) {
+      console.warn(`[DEBUG LOGIN] Username mismatch: '${username}' !== '${expectedUsername}'`)
       return Response.json(
         { error: 'Kullanıcı adı veya şifre hatalı' },
         { status: 401 }
@@ -13,6 +16,7 @@ export async function POST(req) {
     }
 
     const isValid = await verifyPassword(password)
+    console.log(`[DEBUG LOGIN] Password match result: ${isValid}`)
     if (!isValid) {
       return Response.json(
         { error: 'Kullanıcı adı veya şifre hatalı' },
