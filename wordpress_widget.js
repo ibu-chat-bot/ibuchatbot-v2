@@ -1,727 +1,336 @@
 (function () {
   'use strict';
 
-  /* ---------- Yapılandırma ---------- */
   const IBU_CONFIG = {
-    apiUrl: 'https://YOUR-NEXTJS-APP.vercel.app/api/chat', // ← DEĞİŞTİRİN
-    primaryColor: '#1a3a6b',     // IBU lacivert
-    accentColor:  '#c8a951',     // IBU altın sarısı
-    botName:      'IBU Asistan',
-    theme:        'default',     // 'default', 'emerald', 'royal', 'midnight', 'crimson', 'sunset', 'custom'
-    tooltipTr:    'IBU Dijital Asistanı sorularınızı yanıtlamaya hazır. 👋',
-    tooltipEn:    'IBU Digital Assistant is ready to answer your questions. 👋',
-    welcomeTr:    'Merhaba! 👋 Kayıt, burslar, programlar veya kampüs hakkında her türlü sorunuzu yanıtlayabilirim.',
-    welcomeEn:    'Hello! 👋 I can answer your questions about enrollment, scholarships, programs, or campus life.',
-    placeholderTr:'Sorunuzu buraya yazın...',
-    placeholderEn:'Type your question here...',
+    apiUrl: 'https://YOUR-NEXTJS-APP.vercel.app/api/chat',
+    primaryColor: '#1a3a6b',
+    accentColor: '#c8a951',
+    botName: 'IBU Asistan',
+    theme: 'default',
+    tooltipTr: 'Merhaba! 👋 IBU Dijital Asistanı sorularınızı yanıtlamaya hazır.',
+    tooltipEn: 'Hello! 👋 IBU Digital Assistant is ready to help you.',
+    welcomeTr: 'Merhaba! 👋 Kayıt, burslar, programlar veya kampüs hakkında her türlü sorunuzu yanıtlayabilirim.',
+    welcomeEn: 'Hello! 👋 I can answer your questions about enrollment, scholarships, programs, or campus life.',
+    placeholderTr: 'Bir şeyler sorun...',
+    placeholderEn: 'Ask me anything...',
     quickRepliesTr: ['📅 Kayıt tarihleri', '🎓 Burs imkânları', '📚 Programlar', '🏠 Yurt & konaklama'],
     quickRepliesEn: ['📅 Enrollment dates', '🎓 Scholarships', '📚 Programs', '🏠 Dormitory'],
   };
 
-  /* ---------- Premium Temalar ---------- */
   const THEMES = {
-    default:  { primary: '#1a3a6b', accent: '#c8a951' },
-    emerald:  { primary: '#064e3b', accent: '#34d399' },
-    royal:    { primary: '#4c1d95', accent: '#fcd34d' },
+    default: { primary: '#1a3a6b', accent: '#c8a951' },
+    emerald: { primary: '#064e3b', accent: '#34d399' },
+    royal: { primary: '#4c1d95', accent: '#fcd34d' },
     midnight: { primary: '#0f172a', accent: '#06b6d4' },
-    crimson:  { primary: '#991b1b', accent: '#cbd5e1' },
-    sunset:   { primary: '#7c2d12', accent: '#f59e0b' }
+    crimson: { primary: '#991b1b', accent: '#cbd5e1' },
+    sunset: { primary: '#7c2d12', accent: '#f59e0b' }
   };
 
-  const themeName = IBU_CONFIG.theme || 'default';
-  let primaryColor = IBU_CONFIG.primaryColor || '#1a3a6b';
-  let accentColor = IBU_CONFIG.accentColor || '#c8a951';
+  const t = IBU_CONFIG.theme || 'default';
+  let pc = IBU_CONFIG.primaryColor || '#1a3a6b';
+  let ac = IBU_CONFIG.accentColor || '#c8a951';
+  if (t !== 'custom' && THEMES[t]) { pc = THEMES[t].primary; ac = THEMES[t].accent; }
 
-  if (themeName !== 'custom' && THEMES[themeName]) {
-    primaryColor = THEMES[themeName].primary;
-    accentColor = THEMES[themeName].accent;
-  }
-
-  // Dynamic asset loading
   const logoUrl = IBU_CONFIG.apiUrl.replace('/api/chat', '/logoicon.ico');
 
-  // Load Premium Typography from Google Fonts (Outfit & Plus Jakarta Sans)
-  const fontLink = document.createElement('link');
-  fontLink.rel = 'stylesheet';
-  fontLink.href = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap';
-  document.head.appendChild(fontLink);
-
-  /* ---------- Yardımcı: Renk Parlaklığı (Gradient için) ---------- */
-  function adjustBrightness(hex, percent) {
-    let hexClean = hex.replace('#', '');
-    if (hexClean.length === 3) {
-      hexClean = hexClean[0] + hexClean[0] + hexClean[1] + hexClean[1] + hexClean[2] + hexClean[2];
-    }
-    let R = parseInt(hexClean.substring(0, 2), 16);
-    let G = parseInt(hexClean.substring(2, 4), 16);
-    let B = parseInt(hexClean.substring(4, 6), 16);
-
-    R = parseInt(R * (100 + percent) / 100);
-    G = parseInt(G * (100 + percent) / 100);
-    B = parseInt(B * (100 + percent) / 100);
-
-    R = (R < 255) ? R : 255;
-    G = (G < 255) ? G : 255;
-    B = (B < 255) ? B : 255;
-
-    R = (R > 0) ? R : 0;
-    G = (G > 0) ? G : 0;
-    B = (B > 0) ? B : 0;
-
-    const rHex = R.toString(16).padStart(2, '0');
-    const gHex = G.toString(16).padStart(2, '0');
-    const bHex = B.toString(16).padStart(2, '0');
-
-    return `#${rHex}${gHex}${bHex}`;
+  // Hex to RGB
+  function hexRgb(hex) {
+    let h = hex.replace('#', '');
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
   }
 
-  /* ---------- Yardımcı: Dil tespiti ---------- */
   function detectLang(text) {
     return /[çğıöşüÇĞİÖŞÜ]|\b(ne|nasıl|hangi|kayıt|burs|üniversite)\b/i.test(text) ? 'tr' : 'en';
   }
 
-  /* ---------- State ---------- */
-  let sessionId   = 'sess_' + Math.random().toString(36).slice(2);
-  let history     = [];
-  let isOpen      = false;
-  let isTyping    = false;
-  let currentLang = document.documentElement.lang?.startsWith('tr') ? 'tr' : 'en';
+  const [r,g,b] = hexRgb(pc);
 
-  /* ---------- CSS ---------- */
-  const style = document.createElement('style');
-  style.textContent = `
-    #ibu-chat-fab {
-      position: fixed; bottom: 24px; right: 24px; z-index: 99998;
-      width: 60px; height: 60px; border-radius: 50%;
-      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%);
-      border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.25);
-      transition: all .3s cubic-bezier(.34,1.56,.64,1);
-    }
-    #ibu-chat-fab:hover { transform: scale(1.08) rotate(5deg); box-shadow: 0 12px 35px rgba(15, 23, 42, 0.35); }
-    #ibu-chat-fab img { width: 28px; height: 28px; object-fit: contain; }
-    #ibu-chat-fab .ibu-badge {
-      position: absolute; top: -3px; right: -3px;
-      width: 14px; height: 14px; border-radius: 50%;
-      background: #ef4444; border: 2px solid white;
-      display: none;
-    }
+  document.head.insertAdjacentHTML('beforeend',
+    `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700&family=Outfit:wght@600;700;800&display=swap">`
+  );
 
-    #ibu-chat-tooltip {
-      position: fixed; bottom: 32px; right: 100px; z-index: 99997;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      border-radius: 16px; padding: 12px 16px; max-width: 240px;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-      font-size: 13px; color: #1e293b; line-height: 1.5;
-      display: flex; gap: 10px; align-items: center;
-      opacity: 0; transform: translateX(15px); pointer-events: none;
-      transition: all .4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    #ibu-chat-tooltip.ibu-show {
-      opacity: 1; transform: translateX(0); pointer-events: all;
-    }
-    #ibu-chat-tooltip::after {
-      content: ''; position: absolute; right: -6px; top: calc(50% - 6px);
-      width: 10px; height: 10px; background: rgba(255, 255, 255, 0.95);
-      border-top: 1px solid rgba(15, 23, 42, 0.08);
-      border-right: 1px solid rgba(15, 23, 42, 0.08);
-      transform: rotate(45deg);
-    }
-    .ibu-tooltip-close {
-      background: #f1f5f9; border: none; color: #64748b; cursor: pointer;
-      font-size: 11px; font-weight: bold; width: 20px; height: 20px;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: all 0.2s;
-    }
-    .ibu-tooltip-close:hover { background: #e2e8f0; color: #0f172a; }
+  const css = `
+#ibu-fab{position:fixed;bottom:24px;right:24px;z-index:99998;width:62px;height:62px;border-radius:50%;background:linear-gradient(145deg,${pc},rgb(${Math.max(0,r-30)},${Math.max(0,g-30)},${Math.max(0,b-30)}));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(${r},${g},${b},.45),0 2px 8px rgba(0,0,0,.2);transition:all .35s cubic-bezier(.34,1.56,.64,1);}
+#ibu-fab:hover{transform:scale(1.1);box-shadow:0 12px 40px rgba(${r},${g},${b},.55),0 4px 16px rgba(0,0,0,.25);}
+#ibu-fab img{width:30px;height:30px;object-fit:contain;filter:brightness(0) invert(1);}
 
-    #ibu-chat-window {
-      position: fixed; bottom: 96px; right: 24px; z-index: 99999;
-      width: 380px; height: 580px;
-      background: #ffffff; border-radius: 24px;
-      display: flex; flex-direction: column;
-      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
-      border: 1px solid rgba(15, 23, 42, 0.06);
-      transform: scale(0.9) translateY(30px);
-      transform-origin: bottom right;
-      opacity: 0; pointer-events: none;
-      transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity .25s;
-      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-      overflow: hidden;
-    }
-    #ibu-chat-window.ibu-open {
-      transform: scale(1) translateY(0);
-      opacity: 1; pointer-events: all;
-    }
+#ibu-tooltip{position:fixed;bottom:36px;right:100px;z-index:99997;max-width:230px;background:white;border-radius:18px;padding:14px 16px;box-shadow:0 10px 40px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#1e293b;line-height:1.5;display:flex;align-items:flex-start;gap:10px;opacity:0;transform:scale(.9) translateX(10px);pointer-events:none;transition:all .4s cubic-bezier(.34,1.56,.64,1);}
+#ibu-tooltip.show{opacity:1;transform:scale(1) translateX(0);pointer-events:all;}
+#ibu-tooltip::after{content:'';position:absolute;right:-7px;top:50%;transform:translateY(-50%) rotate(45deg);width:12px;height:12px;background:white;box-shadow:2px -2px 6px rgba(0,0,0,.04);}
+#ibu-tooltip .tc{background:#f1f5f9;border:none;width:22px;height:22px;min-width:22px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#64748b;transition:all .2s;}
+#ibu-tooltip .tc:hover{background:#e2e8f0;color:#1e293b;}
 
-    .ibu-header {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-      padding: 18px 20px;
-      display: flex; align-items: center; gap: 14px;
-      flex-shrink: 0;
-      z-index: 10;
-    }
-    .ibu-avatar {
-      width: 42px; height: 42px; border-radius: 50%;
-      background: #ffffff;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-      border: 1.5px solid ${accentColor}44;
-      overflow: hidden;
-    }
-    .ibu-avatar img { width: 26px; height: 26px; object-fit: contain; }
-    .ibu-header-info { flex: 1; }
-    .ibu-header-name {
-      color: #0f172a; font-family: 'Outfit', sans-serif;
-      font-size: 16px; font-weight: 700; margin: 0;
-      letter-spacing: -0.02em;
-    }
-    .ibu-header-status {
-      color: #64748b; font-size: 11px; margin: 4px 0 0;
-      display: flex; align-items: center; gap: 6px;
-      font-weight: 500;
-    }
-    .ibu-status-dot {
-      width: 6px; height: 6px; background: #10b981;
-      border-radius: 50%; display: inline-block;
-      animation: ibu-pulse 2s infinite;
-    }
-    @keyframes ibu-pulse {
-      0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.4; }
-    }
-    .ibu-close-btn {
-      background: #f1f5f9; border: none; border-radius: 50%;
-      width: 32px; height: 32px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      color: #475569; font-size: 12px; font-weight: bold;
-      transition: all .2s;
-    }
-    .ibu-close-btn:hover { background: #e2e8f0; color: #0f172a; transform: rotate(90deg); }
+#ibu-win{position:fixed;bottom:100px;right:24px;z-index:99999;width:390px;height:600px;background:#f1f5f9;border-radius:28px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.16),0 8px 24px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.04);transform:scale(.88) translateY(24px);transform-origin:bottom right;opacity:0;pointer-events:none;transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .25s ease;font-family:'Inter',sans-serif;}
+#ibu-win.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
 
-    .ibu-messages {
-      flex: 1; overflow-y: auto; padding: 20px 18px;
-      display: flex; flex-direction: column; gap: 18px;
-      background-color: #f8fafc;
-      background-image: radial-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px);
-      background-size: 16px 16px;
-      scroll-behavior: smooth;
-    }
-    .ibu-messages::-webkit-scrollbar { width: 4px; }
-    .ibu-messages::-webkit-scrollbar-track { background: transparent; }
-    .ibu-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.ibu-hdr{background:linear-gradient(150deg,${pc} 0%,rgb(${Math.max(0,r-45)},${Math.max(0,g-45)},${Math.max(0,b-45)}) 100%);padding:20px 18px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;overflow:hidden;}
+.ibu-hdr::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='28'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none;}
+.ibu-hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${ac},transparent);opacity:.7;}
+.ibu-av{width:46px;height:46px;min-width:46px;border-radius:50%;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+.ibu-av img{width:26px;height:26px;object-fit:contain;filter:brightness(0) invert(1);}
+.ibu-hdr-txt{flex:1;}
+.ibu-hdr-name{font-family:'Outfit',sans-serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:-.02em;margin:0;text-shadow:0 1px 3px rgba(0,0,0,.15);}
+.ibu-hdr-sub{font-size:11px;color:rgba(255,255,255,.75);margin:3px 0 0;display:flex;align-items:center;gap:5px;font-weight:500;}
+.ibu-dot{width:7px;height:7px;background:#34d399;border-radius:50%;animation:ibu-p 2s infinite;}
+@keyframes ibu-p{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
+.ibu-xbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.9);font-size:14px;transition:all .2s;backdrop-filter:blur(8px);}
+.ibu-xbtn:hover{background:rgba(255,255,255,.25);transform:rotate(90deg);}
 
-    .ibu-msg { display: flex; gap: 12px; max-width: 86%; align-items: flex-start; }
-    .ibu-msg.ibu-bot { align-self: flex-start; }
-    .ibu-msg.ibu-user { align-self: flex-end; flex-direction: row-reverse; }
+.ibu-msgs{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth;}
+.ibu-msgs::-webkit-scrollbar{width:3px;}
+.ibu-msgs::-webkit-scrollbar-track{background:transparent;}
+.ibu-msgs::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
 
-    .ibu-msg-avatar {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: #ffffff; border: 1.5px solid rgba(15, 23, 42, 0.06);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-      position: relative;
-    }
-    .ibu-msg-avatar::after {
-      content: ''; position: absolute; inset: -2px; border-radius: 50%;
-      border: 1px solid ${accentColor}33;
-    }
-    .ibu-msg-avatar img { width: 18px; height: 18px; object-fit: contain; }
+.ibu-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:2px;}
+.ibu-row.usr{flex-direction:row-reverse;}
+.ibu-row.bot-row + .ibu-row.bot-row .ibu-bav,.ibu-row.bot-row + .ibu-row.bot-row ~ .ibu-row.bot-row .ibu-bav{visibility:hidden;}
 
-    .ibu-bubble-wrapper { display: flex; flex-direction: column; flex: 1; }
+.ibu-bav{width:34px;height:34px;min-width:34px;border-radius:50%;background:linear-gradient(145deg,${pc},rgb(${Math.max(0,r-30)},${Math.max(0,g-30)},${Math.max(0,b-30)}));display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(${r},${g},${b},.35);}
+.ibu-bav img{width:19px;height:19px;object-fit:contain;filter:brightness(0) invert(1);}
 
-    .ibu-bubble {
-      padding: 12px 16px; border-radius: 20px;
-      font-size: 13.5px; line-height: 1.6;
-      word-break: break-word;
-      font-weight: 450;
-      letter-spacing: -0.01em;
-    }
-    .ibu-bot .ibu-bubble {
-      background: #ffffff; color: #1e293b;
-      border: 1px solid rgba(15, 23, 42, 0.04);
-      border-top-left-radius: 4px;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
-    }
-    .ibu-user .ibu-bubble {
-      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%);
-      color: #fff;
-      border-top-right-radius: 4px;
-      box-shadow: 0 4px 14px ${primaryColor}25;
-    }
-    .ibu-time {
-      font-size: 10px; color: #94a3b8;
-      margin-top: 6px; padding: 0 4px;
-      font-weight: 500;
-    }
-    .ibu-user .ibu-time { text-align: right; }
+.ibu-bub{max-width:72%;padding:11px 15px;border-radius:20px;font-size:13.5px;line-height:1.6;word-break:break-word;font-weight:450;animation:ibu-in .25s ease-out;}
+@keyframes ibu-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.bot .ibu-bub{background:#fff;color:#1e293b;border-radius:20px 20px 20px 5px;box-shadow:0 2px 12px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.03);}
+.usr .ibu-bub{background:linear-gradient(145deg,${pc},rgb(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)}));color:#fff;border-radius:20px 20px 5px 20px;box-shadow:0 4px 16px rgba(${r},${g},${b},.35);}
+.ibu-ts{font-size:10px;color:#94a3b8;margin-top:5px;font-weight:500;padding:0 4px;}
+.usr .ibu-ts{text-align:right;}
 
-    .ibu-typing-bubble {
-      display: flex; gap: 5px; align-items: center; padding: 12px 18px;
-      background: #ffffff; border-radius: 18px; border-top-left-radius: 4px;
-      border: 1px solid rgba(15, 23, 42, 0.04);
-      max-width: 68px;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
-    }
-    .ibu-typing-bubble span {
-      width: 7px; height: 7px; background: #94a3b8;
-      border-radius: 50%; animation: ibu-bounce 1.3s infinite;
-    }
-    .ibu-typing-bubble span:nth-child(2) { animation-delay: .2s; }
-    .ibu-typing-bubble span:nth-child(3) { animation-delay: .4s; }
-    @keyframes ibu-bounce {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-6px); }
-    }
+.ibu-typing{display:flex;gap:6px;align-items:center;padding:12px 16px;background:#fff;border-radius:20px 20px 20px 5px;box-shadow:0 2px 12px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.03);width:fit-content;}
+.ibu-typing span{width:7px;height:7px;background:#94a3b8;border-radius:50%;animation:ibu-b 1.4s infinite;}
+.ibu-typing span:nth-child(2){animation-delay:.15s;}
+.ibu-typing span:nth-child(3){animation-delay:.3s;}
+@keyframes ibu-b{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-7px);}}
 
-    /* Suggestions follow-up options */
-    .ibu-suggestions-container {
-      display: flex; flex-direction: column; gap: 8px;
-      margin-top: 10px; padding-left: 44px;
-      animation: ibu-slide-in .3s ease-out;
-    }
-    .ibu-suggestions-label {
-      font-size: 10.5px; font-weight: 700; color: #94a3b8;
-      letter-spacing: 0.04em; text-transform: uppercase;
-      margin-bottom: 2px;
-    }
-    .ibu-suggestion-btn {
-      background: #ffffff;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      color: #334155;
-      font-size: 12.5px;
-      font-weight: 500;
-      padding: 9px 14px;
-      border-radius: 12px;
-      cursor: pointer;
-      text-align: left;
-      transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
-      width: fit-content;
-      max-width: 100%;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-    .ibu-suggestion-btn:hover {
-      background: ${primaryColor}0a;
-      border-color: ${primaryColor}66;
-      color: ${primaryColor};
-      transform: translateX(5px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }
+.ibu-sug-wrap{padding-left:44px;margin-top:8px;animation:ibu-in .3s ease-out;}
+.ibu-sug-lbl{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;}
+.ibu-sug-list{display:flex;flex-direction:column;gap:6px;}
+.ibu-sug-btn{background:rgba(${r},${g},${b},.06);border:1.5px solid rgba(${r},${g},${b},.15);color:${pc};font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:12px;cursor:pointer;text-align:left;transition:all .2s cubic-bezier(.16,1,.3,1);width:fit-content;font-family:'Inter',sans-serif;}
+.ibu-sug-btn:hover{background:rgba(${r},${g},${b},.12);border-color:rgba(${r},${g},${b},.35);transform:translateX(4px);}
 
-    .ibu-quick-replies {
-      padding: 6px 16px 12px;
-      display: flex; gap: 8px;
-      background: #f8fafc;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      flex-shrink: 0;
-    }
-    .ibu-quick-replies::-webkit-scrollbar { display: none; }
-    .ibu-qr {
-      background: #ffffff; border: 1.5px solid rgba(15, 23, 42, 0.08);
-      color: #334155; border-radius: 18px;
-      padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
-      transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
-      white-space: nowrap;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-      flex-shrink: 0;
-    }
-    .ibu-qr:hover {
-      background: ${primaryColor};
-      color: white;
-      border-color: ${primaryColor};
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px ${primaryColor}22;
-    }
+.ibu-qr-bar{padding:8px 14px 12px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+.ibu-qr-bar::-webkit-scrollbar{display:none;}
+.ibu-qr-chip{background:#fff;border:1.5px solid rgba(0,0,0,.07);color:#374151;border-radius:20px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .25s;box-shadow:0 1px 4px rgba(0,0,0,.04);font-family:'Inter',sans-serif;}
+.ibu-qr-chip:hover{background:${pc};color:#fff;border-color:${pc};box-shadow:0 4px 12px rgba(${r},${g},${b},.3);transform:translateY(-2px);}
 
-    /* Floating Pill Input Wrapper */
-    .ibu-input-wrapper {
-      margin: 12px 16px 16px;
-      background: #ffffff;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 24px;
-      padding: 6px 6px 6px 16px;
-      display: flex; gap: 10px; align-items: center;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
-      transition: all 0.2s ease-in-out;
-      flex-shrink: 0;
-    }
-    .ibu-input-wrapper:focus-within {
-      border-color: ${primaryColor};
-      box-shadow: 0 0 0 4px ${primaryColor}1a, 0 6px 16px rgba(15, 23, 42, 0.06);
-    }
-    .ibu-input {
-      flex: 1; border: none; background: transparent;
-      font-size: 13.5px; color: #1e293b;
-      outline: none; resize: none; max-height: 90px; min-height: 24px;
-      line-height: 1.5; font-family: inherit;
-    }
-    .ibu-input::placeholder { color: #94a3b8; }
-    
-    .ibu-send {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%);
-      border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: all .2s;
-      box-shadow: 0 3px 8px ${primaryColor}33;
-    }
-    .ibu-send:hover { transform: scale(1.05); }
-    .ibu-send:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
-    .ibu-send svg { width: 15px; height: 15px; fill: white; }
+.ibu-inp-zone{margin:8px 14px 14px;background:#fff;border-radius:22px;display:flex;align-items:flex-end;gap:8px;padding:8px 8px 8px 16px;border:1.5px solid rgba(0,0,0,.07);box-shadow:0 2px 8px rgba(0,0,0,.04);transition:all .2s;flex-shrink:0;}
+.ibu-inp-zone:focus-within{border-color:rgba(${r},${g},${b},.45);box-shadow:0 0 0 4px rgba(${r},${g},${b},.09),0 4px 16px rgba(0,0,0,.06);}
+.ibu-inp{flex:1;border:none;background:transparent;font-size:13.5px;color:#1e293b;outline:none;resize:none;max-height:100px;min-height:24px;line-height:1.5;font-family:'Inter',sans-serif;font-weight:400;}
+.ibu-inp::placeholder{color:#94a3b8;}
+.ibu-send{width:38px;height:38px;border-radius:50%;background:linear-gradient(145deg,${pc},rgb(${Math.max(0,r-30)},${Math.max(0,g-30)},${Math.max(0,b-30)}));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;box-shadow:0 3px 10px rgba(${r},${g},${b},.35);}
+.ibu-send:hover{transform:scale(1.07);box-shadow:0 5px 14px rgba(${r},${g},${b},.45);}
+.ibu-send:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+.ibu-send svg{width:16px;height:16px;fill:#fff;}
 
-    .ibu-powered {
-      text-align: center; font-size: 10px; color: #94a3b8;
-      padding: 0 0 10px; flex-shrink: 0;
-      background: #ffffff;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
+.ibu-foot{text-align:center;font-size:10.5px;color:#94a3b8;padding:0 0 12px;flex-shrink:0;font-weight:600;letter-spacing:.02em;background:#f1f5f9;}
 
-    @keyframes ibu-slide-in {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+.ibu-date-sep{text-align:center;font-size:10px;color:#94a3b8;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin:8px 0;}
 
-    @media (max-width: 480px) {
-      #ibu-chat-window { width: calc(100vw - 16px); right: 8px; bottom: 80px; height: calc(100vh - 100px); border-radius: 20px; }
-      #ibu-chat-fab { right: 16px; bottom: 16px; }
-      #ibu-chat-tooltip { right: 84px; bottom: 24px; max-width: 200px; }
-    }
-  `;
-  document.head.appendChild(style);
+@media(max-width:480px){#ibu-win{width:calc(100vw - 12px);right:6px;bottom:82px;height:calc(100dvh - 100px);border-radius:22px;}#ibu-fab{right:14px;bottom:14px;}#ibu-tooltip{right:88px;bottom:28px;max-width:200px;}}
+`;
 
-  /* ---------- HTML ---------- */
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
+
+  // FAB
   const fab = document.createElement('button');
-  fab.id = 'ibu-chat-fab';
+  fab.id = 'ibu-fab';
   fab.setAttribute('aria-label', 'IBU Chatbot');
-  fab.innerHTML = `
-    <img src="${logoUrl}" alt="IBU" />
-    <span class="ibu-badge"></span>
-  `;
+  fab.innerHTML = `<img src="${logoUrl}" alt="IBU">`;
 
-  // Closed Welcoming Notification Tooltip next to FAB
-  const tooltip = document.createElement('div');
-  tooltip.id = 'ibu-chat-tooltip';
-  tooltip.innerHTML = `
-    <div style="flex: 1; font-weight: 600;">
-      ${currentLang === 'tr' ? IBU_CONFIG.tooltipTr : IBU_CONFIG.tooltipEn}
-    </div>
-    <button class="ibu-tooltip-close" aria-label="Kapat">✕</button>
-  `;
+  // Tooltip
+  const tip = document.createElement('div');
+  tip.id = 'ibu-tooltip';
+  tip.innerHTML = `<div style="flex:1">${IBU_CONFIG.tooltipTr}</div><button class="tc" aria-label="Kapat">✕</button>`;
 
+  // Window
   const win = document.createElement('div');
-  win.id = 'ibu-chat-window';
+  win.id = 'ibu-win';
   win.setAttribute('role', 'dialog');
-  win.setAttribute('aria-label', 'IBU Chatbot');
   win.innerHTML = `
-    <div class="ibu-header">
-      <div class="ibu-avatar">
-        <img src="${logoUrl}" alt="IBU" />
-      </div>
-      <div class="ibu-header-info">
-        <p class="ibu-header-name">${IBU_CONFIG.botName}</p>
-        <p class="ibu-header-status">
-          <span class="ibu-status-dot"></span>
-          <span id="ibu-status-text">Çevrimiçi</span>
-        </p>
-      </div>
-      <button class="ibu-close-btn" id="ibu-close" aria-label="Kapat">✕</button>
-    </div>
-    <div class="ibu-messages" id="ibu-messages"></div>
-    <div class="ibu-quick-replies" id="ibu-qr"></div>
-    <div class="ibu-input-wrapper">
-      <textarea class="ibu-input" id="ibu-input" rows="1"
-        placeholder="${IBU_CONFIG.placeholderTr}"></textarea>
-      <button class="ibu-send" id="ibu-send" aria-label="Gönder">
-        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-      </button>
-    </div>
-    <div class="ibu-powered">Powered by IBU AI</div>
-  `;
+<div class="ibu-hdr">
+  <div class="ibu-av"><img src="${logoUrl}" alt="IBU"></div>
+  <div class="ibu-hdr-txt">
+    <p class="ibu-hdr-name">${IBU_CONFIG.botName}</p>
+    <p class="ibu-hdr-sub"><span class="ibu-dot"></span> <span id="ibu-st">Çevrimiçi • Aktif Asistan</span></p>
+  </div>
+  <button class="ibu-xbtn" id="ibu-x">✕</button>
+</div>
+<div class="ibu-msgs" id="ibu-msgs"></div>
+<div class="ibu-qr-bar" id="ibu-qr"></div>
+<div class="ibu-inp-zone">
+  <textarea class="ibu-inp" id="ibu-inp" rows="1" placeholder="${IBU_CONFIG.placeholderTr}"></textarea>
+  <button class="ibu-send" id="ibu-s" aria-label="Gönder">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
+</div>
+<div class="ibu-foot">Powered by IBU AI ✦</div>`;
 
   document.body.appendChild(fab);
-  document.body.appendChild(tooltip);
+  document.body.appendChild(tip);
   document.body.appendChild(win);
 
-  /* ---------- DOM refs ---------- */
-  const messagesEl = document.getElementById('ibu-messages');
-  const inputEl    = document.getElementById('ibu-input');
-  const sendBtn    = document.getElementById('ibu-send');
-  const closeBtn   = document.getElementById('ibu-close');
-  const qrEl       = document.getElementById('ibu-qr');
+  const msgsEl = document.getElementById('ibu-msgs');
+  const inpEl  = document.getElementById('ibu-inp');
+  const sBtn   = document.getElementById('ibu-s');
+  const xBtn   = document.getElementById('ibu-x');
+  const qrEl   = document.getElementById('ibu-qr');
 
-  /* ---------- Yardımcılar ---------- */
-  function now() {
-    return new Date().toLocaleTimeString(currentLang === 'tr' ? 'tr-TR' : 'en-US', {
-      hour: '2-digit', minute: '2-digit'
-    });
+  let open = false, typing = false, lang = 'tr';
+  const hist = [];
+
+  function ts() {
+    return new Date().toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+  function scroll() { setTimeout(() => { msgsEl.scrollTop = msgsEl.scrollHeight; }, 30); }
+
+  function addMsg(text, role) {
+    const row = document.createElement('div');
+    row.className = `ibu-row ${role === 'bot' ? 'bot-row bot' : 'usr'}`;
+    if (role === 'bot') {
+      row.innerHTML = `<div class="ibu-bav"><img src="${logoUrl}" alt="B"></div><div><div class="ibu-bub">${text.replace(/\n/g,'<br>')}</div><div class="ibu-ts">${ts()}</div></div>`;
+    } else {
+      row.innerHTML = `<div><div class="ibu-bub">${text.replace(/\n/g,'<br>')}</div><div class="ibu-ts">${ts()}</div></div>`;
+    }
+    msgsEl.appendChild(row);
+    scroll();
+    return row;
   }
 
-  function scrollDown() {
-    setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50);
+  function showTyp() {
+    const row = document.createElement('div');
+    row.className = 'ibu-row bot-row bot';
+    row.id = 'ibu-typ';
+    row.innerHTML = `<div class="ibu-bav"><img src="${logoUrl}" alt="B"></div><div class="ibu-typing"><span></span><span></span><span></span></div>`;
+    msgsEl.appendChild(row);
+    scroll();
   }
+  function hideTyp() { const t = document.getElementById('ibu-typ'); if (t) t.remove(); }
 
-  function renderSuggestions(botDiv, list) {
-    if (botDiv.querySelector('.ibu-suggestions-container')) return;
-
-    const container = document.createElement('div');
-    container.className = 'ibu-suggestions-container';
-
-    const label = document.createElement('div');
-    label.className = 'ibu-suggestions-label';
-    label.textContent = currentLang === 'tr' ? 'Bununla ilgili şunları da sorabilirsiniz:' : 'Related questions you can ask:';
-    container.appendChild(label);
-
+  function addSuggs(botRow, list) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ibu-sug-wrap';
+    const lbl = document.createElement('div');
+    lbl.className = 'ibu-sug-lbl';
+    lbl.textContent = lang === 'tr' ? '💡 Bunları da sorabilirsiniz' : '💡 You can also ask';
+    wrap.appendChild(lbl);
+    const lst = document.createElement('div');
+    lst.className = 'ibu-sug-list';
     list.forEach(q => {
       const btn = document.createElement('button');
-      btn.className = 'ibu-suggestion-btn';
+      btn.className = 'ibu-sug-btn';
       btn.textContent = q;
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        container.remove();
-        sendMessage(q);
-      };
-      container.appendChild(btn);
+      btn.onclick = () => { wrap.remove(); document.querySelectorAll('.ibu-sug-wrap').forEach(w=>w.remove()); send(q); };
+      lst.appendChild(btn);
     });
-
-    botDiv.appendChild(container);
-    scrollDown();
+    wrap.appendChild(lst);
+    botRow.parentNode.insertBefore(wrap, botRow.nextSibling);
+    scroll();
   }
 
-  function addMessage(text, role) {
-    const div = document.createElement('div');
-    div.className = `ibu-msg ibu-${role}`;
-    
-    if (role === 'bot') {
-      // Robot avatar next to bot message bubble
-      div.innerHTML = `
-        <div class="ibu-msg-avatar">
-          <img src="${logoUrl}" alt="Bot" />
-        </div>
-        <div class="ibu-bubble-wrapper">
-          <div class="ibu-bubble">${text.replace(/\n/g, '<br>')}</div>
-          <div class="ibu-time">${now()}</div>
-        </div>
-      `;
-    } else {
-      div.innerHTML = `
-        <div class="ibu-bubble-wrapper">
-          <div class="ibu-bubble">${text.replace(/\n/g, '<br>')}</div>
-          <div class="ibu-time">${now()}</div>
-        </div>
-      `;
-    }
-    
-    messagesEl.appendChild(div);
-    scrollDown();
-    return div;
-  }
-
-  function showTyping() {
-    const div = document.createElement('div');
-    div.className = 'ibu-msg ibu-bot';
-    div.id = 'ibu-typing';
-    div.innerHTML = `
-      <div class="ibu-msg-avatar">
-        <img src="${logoUrl}" alt="Bot" />
-      </div>
-      <div class="ibu-bubble-wrapper">
-        <div class="ibu-typing-bubble"><span></span><span></span><span></span></div>
-      </div>
-    `;
-    messagesEl.appendChild(div);
-    scrollDown();
-  }
-
-  function removeTyping() {
-    const t = document.getElementById('ibu-typing');
-    if (t) t.remove();
-  }
-
-  function setQuickReplies(lang) {
-    const replies = lang === 'tr' ? IBU_CONFIG.quickRepliesTr : IBU_CONFIG.quickRepliesEn;
+  function setQR(l) {
+    const chips = l === 'tr' ? IBU_CONFIG.quickRepliesTr : IBU_CONFIG.quickRepliesEn;
     qrEl.innerHTML = '';
-    replies.forEach(r => {
+    chips.forEach(c => {
       const btn = document.createElement('button');
-      btn.className = 'ibu-qr';
-      btn.textContent = r;
-      btn.onclick = () => { qrEl.innerHTML = ''; sendMessage(r.replace(/^[^\s]+\s/, '')); };
+      btn.className = 'ibu-qr-chip';
+      btn.textContent = c;
+      btn.onclick = () => { qrEl.innerHTML = ''; document.querySelectorAll('.ibu-sug-wrap').forEach(w=>w.remove()); send(c.replace(/^\S+\s/,'')); };
       qrEl.appendChild(btn);
     });
   }
 
-  /* ---------- Mesaj gönder (streaming) ---------- */
-  async function sendMessage(text) {
-    if (isTyping) return;
-    isTyping = true;
-    sendBtn.disabled = true;
-
-    // 1. Kullanıcı mesajı ekle
-    addMessage(text, 'user');
+  async function send(text) {
+    if (typing) return;
+    typing = true;
+    sBtn.disabled = true;
+    addMsg(text, 'user');
     qrEl.innerHTML = '';
+    document.querySelectorAll('.ibu-sug-wrap').forEach(w=>w.remove());
 
-    // Clear previous suggestion bubbles to prevent screen clutter
-    document.querySelectorAll('.ibu-suggestions-container').forEach(c => c.remove());
-
-    // Dil algıla ve placeholder/quick replies güncelle
-    const detected = detectLang(text);
-    if (detected !== currentLang) {
-      currentLang = detected;
-      inputEl.placeholder = currentLang === 'tr' ? IBU_CONFIG.placeholderTr : IBU_CONFIG.placeholderEn;
+    const dl = detectLang(text);
+    if (dl !== lang) {
+      lang = dl;
+      inpEl.placeholder = lang === 'tr' ? IBU_CONFIG.placeholderTr : IBU_CONFIG.placeholderEn;
     }
 
-    // 2. Yazıyor animasyonunu göster
-    showTyping();
+    showTyp();
 
-    // 3. API çağrısı
     try {
-      const historyPayload = history.map(h => ({ role: h.role, content: h.content }));
-      history.push({ role: 'user', content: text });
+      const hp = hist.map(h=>({role:h.role,content:h.content}));
+      hist.push({role:'user',content:text});
 
       const resp = await fetch(IBU_CONFIG.apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          sessionId,
-          history: historyPayload,
-          lang: currentLang,
-        }),
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ message: text, sessionId: 'sess_' + Math.random().toString(36).slice(2), history: hp, lang })
       });
 
-      if (!resp.ok) throw new Error('API request failed');
+      if (!resp.ok) throw new Error('fail');
+      hideTyp();
 
-      removeTyping();
+      const botRow = document.createElement('div');
+      botRow.className = 'ibu-row bot-row bot';
+      botRow.innerHTML = `<div class="ibu-bav"><img src="${logoUrl}" alt="B"></div><div><div class="ibu-bub"></div><div class="ibu-ts">${ts()}</div></div>`;
+      msgsEl.appendChild(botRow);
+      const bub = botRow.querySelector('.ibu-bub');
 
-      // Bot mesaj balonu (streaming için)
-      const botDiv = document.createElement('div');
-      botDiv.className = 'ibu-msg ibu-bot';
-      botDiv.innerHTML = `
-        <div class="ibu-msg-avatar">
-          <img src="${logoUrl}" alt="Bot" />
-        </div>
-        <div class="ibu-bubble-wrapper">
-          <div class="ibu-bubble"></div>
-          <div class="ibu-time">${now()}</div>
-        </div>
-      `;
-      messagesEl.appendChild(botDiv);
-      const bubbleEl = botDiv.querySelector('.ibu-bubble');
-
-      // SSE stream oku
       const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let fullText = '';
+      const dec = new TextDecoder();
+      let full = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
-        const lines = decoder.decode(value).split('\n');
-        for (const line of lines) {
+        for (const line of dec.decode(value).split('\n')) {
           if (!line.startsWith('data:')) continue;
           try {
-            const data = JSON.parse(line.slice(5));
-            if (data.text) {
-              fullText += data.text;
-              bubbleEl.innerHTML = fullText.replace(/\n/g, '<br>');
-              scrollDown();
-            }
-            if (data.done) {
-              currentLang = data.lang || currentLang;
-              if (data.suggestions && data.suggestions.length > 0) {
-                renderSuggestions(botDiv, data.suggestions);
-              }
+            const d = JSON.parse(line.slice(5));
+            if (d.text) { full += d.text; bub.innerHTML = full.replace(/\n/g,'<br>'); scroll(); }
+            if (d.done) {
+              lang = d.lang || lang;
+              if (d.suggestions?.length) addSuggs(botRow, d.suggestions);
             }
           } catch {}
         }
       }
+      hist.push({role:'assistant',content:full});
 
-      history.push({ role: 'assistant', content: fullText });
-
-    } catch (err) {
-      removeTyping();
-      const errMsg = currentLang === 'tr'
-        ? 'Bağlantı hatası oluştu. Lütfen tekrar deneyin veya info@ibu.edu.mk adresine yazın.'
-        : 'Connection error. Please try again or email info@ibu.edu.mk';
-      addMessage(errMsg, 'bot');
-      console.error('IBU Chat Error:', err);
+    } catch {
+      hideTyp();
+      addMsg(lang==='tr'?'Bağlantı hatası. Lütfen tekrar deneyin.':'Connection error. Please try again.','bot');
     }
 
-    isTyping = false;
-    sendBtn.disabled = false;
-    inputEl.focus();
+    typing = false;
+    sBtn.disabled = false;
+    inpEl.focus();
   }
 
-  /* ---------- Event Listeners ---------- */
   fab.addEventListener('click', () => {
-    isOpen = !isOpen;
-    win.classList.toggle('ibu-open', isOpen);
-    
-    // Hide welcome tooltip upon open
-    tooltip.classList.remove('ibu-show');
-    
-    if (isOpen && messagesEl.children.length === 0) {
-      // İlk açılışta hoşgeldin mesajı + hızlı cevaplar
-      addMessage(IBU_CONFIG.welcomeTr, 'bot');
-      setQuickReplies('tr');
-      setTimeout(() => inputEl.focus(), 300);
+    open = !open;
+    win.classList.toggle('open', open);
+    tip.classList.remove('show');
+    if (open && msgsEl.children.length === 0) {
+      addMsg(IBU_CONFIG.welcomeTr, 'bot');
+      setQR('tr');
+      setTimeout(() => inpEl.focus(), 350);
     }
   });
 
-  closeBtn.addEventListener('click', () => {
-    isOpen = false;
-    win.classList.remove('ibu-open');
+  xBtn.addEventListener('click', () => { open = false; win.classList.remove('open'); });
+  sBtn.addEventListener('click', () => { const t = inpEl.value.trim(); if (t) { inpEl.value=''; inpEl.style.height='auto'; send(t); } });
+  inpEl.addEventListener('keydown', e => {
+    if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); const t=inpEl.value.trim(); if(t){inpEl.value='';inpEl.style.height='auto';send(t);} }
   });
-
-  sendBtn.addEventListener('click', () => {
-    const text = inputEl.value.trim();
-    if (text) { inputEl.value = ''; sendMessage(text); }
-  });
-
-  inputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      const text = inputEl.value.trim();
-      if (text) { inputEl.value = ''; sendMessage(text); }
-    }
-  });
-
-  // Textarea auto-resize
-  inputEl.addEventListener('input', () => {
-    inputEl.style.height = 'auto';
-    inputEl.style.height = Math.min(inputEl.scrollHeight, 90) + 'px';
-  });
-
-  // ESC ile kapat
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && isOpen) {
-      isOpen = false;
-      win.classList.remove('ibu-open');
-    }
-  });
-
-  // Tooltip close button handler
-  tooltip.querySelector('.ibu-tooltip-close').addEventListener('click', (e) => {
+  inpEl.addEventListener('input', () => { inpEl.style.height='auto'; inpEl.style.height=Math.min(inpEl.scrollHeight,100)+'px'; });
+  document.addEventListener('keydown', e => { if(e.key==='Escape'&&open){open=false;win.classList.remove('open');} });
+  tip.querySelector('.tc').addEventListener('click', e => {
     e.stopPropagation();
-    tooltip.classList.remove('ibu-show');
-    localStorage.setItem('ibu-chat-tooltip-dismissed', 'true');
+    tip.classList.remove('show');
+    localStorage.setItem('ibu-tip-gone','1');
   });
-
-  // Display closed welcome notification after a small delay
   setTimeout(() => {
-    if (!isOpen && !localStorage.getItem('ibu-chat-tooltip-dismissed')) {
-      tooltip.classList.add('ibu-show');
-    }
+    if (!open && !localStorage.getItem('ibu-tip-gone')) tip.classList.add('show');
   }, 3000);
-
 })();
