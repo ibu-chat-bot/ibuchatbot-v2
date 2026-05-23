@@ -60,7 +60,7 @@
 /* ── FAB ── */
 #ibu-fab{
   position:fixed;bottom:24px;right:24px;z-index:99998;
-  width:56px;height:56px;border-radius:16px;
+  width:58px;height:58px;border-radius:16px;
   background:linear-gradient(145deg,${pc},rgb(${Math.max(0, r - 45)},${Math.max(0, g - 45)},${Math.max(0, b - 45)}));
   border:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
@@ -69,7 +69,7 @@
   animation:ibu-pulse 2.8s ease-out 3.5s 3;
 }
 #ibu-fab:hover{
-  transform:scale(1.08);
+  transform:scale(1.06);
   box-shadow:0 12px 32px rgba(${r},${g},${b},.55),0 4px 12px rgba(0,0,0,.14);
 }
 #ibu-fab svg{display:block;flex-shrink:0;}
@@ -117,7 +117,7 @@
   opacity:0;pointer-events:none;
   transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .22s ease;
   font-family:'DM Sans',sans-serif;
-  background:#f7f8fc;
+  background:#f8f9fc;
 }
 #ibu-win.open{
   transform:scale(1) translateY(0);opacity:1;pointer-events:all;
@@ -127,7 +127,7 @@
 /* ── HEADER ── */
 .ibu-hdr{
   background:linear-gradient(148deg,${pc} 0%,rgb(${Math.max(0, r - 55)},${Math.max(0, g - 55)},${Math.max(0, b - 55)}) 100%);
-  padding:16px 16px 14px;
+  padding:16px 18px;
   display:flex;align-items:center;gap:0;
   flex-shrink:0;position:relative;overflow:hidden;
 }
@@ -141,15 +141,9 @@
   content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,rgba(${ar},${ag},${ab},.7),transparent);
 }
-.ibu-hdr-icon{
-  width:38px;height:38px;min-width:38px;border-radius:10px;
-  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.22);
-  display:flex;align-items:center;justify-content:center;
-  margin-right:12px;flex-shrink:0;
-}
 .ibu-hdr-txt{flex:1;min-width:0;}
 .ibu-hdr-name{
-  font-family:'DM Sans',sans-serif;font-size:14.5px;font-weight:700;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;
   color:#fff;letter-spacing:-.02em;margin:0;line-height:1.2;
 }
 .ibu-hdr-sub{
@@ -160,22 +154,6 @@
   width:6px;height:6px;background:#4ade80;border-radius:50%;
   box-shadow:0 0 5px rgba(74,222,128,.8);
   animation:ibu-pulse 2.5s infinite;flex-shrink:0;
-}
-
-/* TR/EN Switch */
-.ibu-lang-sw{
-  display:flex;background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.18);border-radius:8px;overflow:hidden;
-  margin-right:10px;flex-shrink:0;
-}
-.ibu-lang-sw button{
-  padding:4px 9px;border:none;cursor:pointer;
-  font-family:'DM Sans',sans-serif;font-size:9.5px;font-weight:600;
-  color:rgba(255,255,255,.6);background:transparent;
-  transition:all .2s;letter-spacing:.04em;
-}
-.ibu-lang-sw button.active{
-  background:rgba(255,255,255,.22);color:#fff;
 }
 
 /* Close button */
@@ -193,7 +171,7 @@
   padding:18px 14px 10px;
   display:flex;flex-direction:column;gap:0;
   scroll-behavior:smooth;
-  background:#f7f8fc;
+  background:#f8f9fc;
 }
 .ibu-msgs::-webkit-scrollbar{width:3px;}
 .ibu-msgs::-webkit-scrollbar-thumb{background:rgba(${r},${g},${b},.12);border-radius:4px;}
@@ -205,7 +183,7 @@
 
 .ibu-bub-wrap{display:flex;flex-direction:column;gap:3px;max-width:84%;}
 .grp-usr .ibu-bub-wrap{align-items:flex-end;}
-.grp-bot .ibu-bub-wrap{align-items:flex-start;}
+.grp-bot .ibu-bub-wrap{align-items:flex-start;padding-left:0;}
 
 .ibu-bub{
   padding:11px 15px;font-size:13.5px;line-height:1.65;
@@ -215,8 +193,9 @@
 }
 .grp-bot .ibu-bub{
   background:#fff;color:#1e293b;
-  border-radius:4px 16px 16px 16px;
-  box-shadow:0 1px 4px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.05);
+  border-radius:6px 18px 18px 18px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+  border:1px solid rgba(0,0,0,.06);
 }
 .grp-usr .ibu-bub{
   background:linear-gradient(138deg,${pc} 0%,rgb(${Math.max(0, r - 50)},${Math.max(0, g - 50)},${Math.max(0, b - 50)}) 100%);
@@ -282,11 +261,11 @@
   box-shadow:0 3px 12px rgba(${r},${g},${b},.12);
   color:${pc};
 }
-.ibu-sug-chevron{
+.ibu-sug-btn svg{
   color:rgba(${r},${g},${b},.35);flex-shrink:0;
   transition:transform .2s,color .2s;
 }
-.ibu-sug-btn:hover .ibu-sug-chevron{
+.ibu-sug-btn:hover svg{
   transform:translateX(2px);color:${pc};
 }
 
@@ -315,9 +294,9 @@
 /* ── INPUT ── */
 .ibu-inp-zone{
   margin:6px 10px 12px;background:#fff;
-  border-radius:13px;
+  border-radius:14px;
   display:flex;align-items:flex-end;gap:8px;
-  padding:8px 8px 8px 15px;
+  padding:8px 8px 8px 16px;
   border:1.5px solid rgba(15,23,42,.07);
   box-shadow:0 2px 12px rgba(15,23,42,.06);
   transition:border-color .22s,box-shadow .22s;flex-shrink:0;
@@ -334,14 +313,14 @@
 }
 .ibu-inp::placeholder{color:#c4cdd6;}
 .ibu-send{
-  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
   background:linear-gradient(140deg,${pc},rgb(${Math.max(0, r - 40)},${Math.max(0, g - 40)},${Math.max(0, b - 40)}));
   border:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;
   box-shadow:0 3px 12px rgba(${r},${g},${b},.38);
 }
-.ibu-send:hover{transform:scale(1.1);box-shadow:0 5px 18px rgba(${r},${g},${b},.5);}
+.ibu-send:hover{transform:scale(1.08);box-shadow:0 5px 18px rgba(${r},${g},${b},.5);}
 .ibu-send:disabled{opacity:.25;cursor:not-allowed;transform:none;box-shadow:none;}
 .ibu-send svg{display:block;}
 
@@ -350,7 +329,7 @@
   text-align:center;font-size:9px;color:#c8d0db;
   padding:0 0 10px;flex-shrink:0;
   font-weight:500;letter-spacing:.08em;text-transform:uppercase;
-  background:#f7f8fc;
+  background:#f8f9fc;
 }
 
 @media(max-width:480px){
@@ -368,7 +347,7 @@
     const fab = document.createElement('button');
     fab.id = 'ibu-fab';
     fab.setAttribute('aria-label', 'IBU Chatbot');
-    fab.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+    fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" width="24" height="24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
 
     // ── TOOLTIP ──
     const tip = document.createElement('div');
@@ -385,19 +364,16 @@
     win.setAttribute('role', 'dialog');
     win.innerHTML = `
 <div class="ibu-hdr">
-  <div class="ibu-hdr-icon">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-  </div>
   <div class="ibu-hdr-txt">
     <p class="ibu-hdr-name">${IBU_CONFIG.botName}</p>
     <p class="ibu-hdr-sub"><span class="ibu-dot"></span><span id="ibu-st">Çevrimiçi · Aktif Asistan</span></p>
   </div>
-  <div class="ibu-lang-sw">
-    <button id="ibu-tr" class="active">TR</button>
-    <button id="ibu-en">EN</button>
+  <div id="ibu-lang" style="display:flex;border:1px solid rgba(255,255,255,.2);border-radius:20px;overflow:hidden;font-size:9px;font-weight:700;margin-right:8px;">
+    <button id="ibu-tr" style="padding:3px 9px;background:rgba(255,255,255,.25);color:white;border:none;cursor:pointer;">TR</button>
+    <button id="ibu-en" style="padding:3px 9px;background:transparent;color:rgba(255,255,255,.7);border:none;cursor:pointer;">EN</button>
   </div>
   <button class="ibu-xbtn" id="ibu-x">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
   </button>
 </div>
 <div class="ibu-msgs" id="ibu-msgs"></div>
@@ -426,18 +402,8 @@
     const hist = [];
 
     // TR / EN switch
-    trBtn.addEventListener('click', () => {
-        lang = 'tr';
-        inpEl.placeholder = IBU_CONFIG.placeholderTr;
-        trBtn.classList.add('active'); enBtn.classList.remove('active');
-        document.getElementById('ibu-st').textContent = 'Çevrimiçi · Aktif Asistan';
-    });
-    enBtn.addEventListener('click', () => {
-        lang = 'en';
-        inpEl.placeholder = IBU_CONFIG.placeholderEn;
-        enBtn.classList.add('active'); trBtn.classList.remove('active');
-        document.getElementById('ibu-st').textContent = 'Online · Active Assistant';
-    });
+    document.getElementById('ibu-tr').onclick = () => { lang='tr'; inpEl.placeholder=IBU_CONFIG.placeholderTr; document.getElementById('ibu-tr').style.background='rgba(255,255,255,.25)'; document.getElementById('ibu-en').style.background='transparent'; document.getElementById('ibu-st').textContent = 'Çevrimiçi · Aktif Asistan'; }
+    document.getElementById('ibu-en').onclick = () => { lang='en'; inpEl.placeholder=IBU_CONFIG.placeholderEn; document.getElementById('ibu-en').style.background='rgba(255,255,255,.25)'; document.getElementById('ibu-tr').style.background='transparent'; document.getElementById('ibu-st').textContent = 'Online · Active Assistant'; }
 
     function ts() {
         return new Date().toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
@@ -479,7 +445,7 @@
         list.forEach(q => {
             const btn = document.createElement('button');
             btn.className = 'ibu-sug-btn';
-            btn.innerHTML = `<span>${q}</span><svg class="ibu-sug-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+            btn.innerHTML = `<span>${q}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="9 18 15 12 9 6"/></svg>`;
             btn.onclick = () => { wrap.remove(); document.querySelectorAll('.ibu-sug-wrap').forEach(w => w.remove()); send(q); };
             lst.appendChild(btn);
         });
@@ -494,7 +460,7 @@
         chips.forEach(c => {
             const btn = document.createElement('button');
             btn.className = 'ibu-qr-chip';
-            btn.textContent = c;
+            btn.textContent = c.replace(/^\p{Emoji}\s*/u, '');
             btn.onclick = () => { qrEl.innerHTML = ''; document.querySelectorAll('.ibu-sug-wrap').forEach(w => w.remove()); send(c); };
             qrEl.appendChild(btn);
         });
@@ -512,8 +478,15 @@
         if (dl !== lang) {
             lang = dl;
             inpEl.placeholder = lang === 'tr' ? IBU_CONFIG.placeholderTr : IBU_CONFIG.placeholderEn;
-            if (lang === 'tr') { trBtn.classList.add('active'); enBtn.classList.remove('active'); }
-            else { enBtn.classList.add('active'); trBtn.classList.remove('active'); }
+            if (lang === 'tr') {
+                trBtn.style.background='rgba(255,255,255,.25)';
+                enBtn.style.background='transparent';
+                document.getElementById('ibu-st').textContent = 'Çevrimiçi · Aktif Asistan';
+            } else {
+                enBtn.style.background='rgba(255,255,255,.25)';
+                trBtn.style.background='transparent';
+                document.getElementById('ibu-st').textContent = 'Online · Active Assistant';
+            }
         }
 
         showTyp();
