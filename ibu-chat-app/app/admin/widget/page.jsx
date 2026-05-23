@@ -8,8 +8,8 @@ export default function WidgetPage() {
   const [apiUrl, setApiUrl] = useState('https://ibuchatbot-v2.vercel.app/api/chat') // default
   const [botName, setBotName] = useState('IBU Asistan')
   const [theme, setTheme] = useState('default')
-  const [primaryColor, setPrimaryColor] = useState('#1a3a6b')
-  const [accentColor, setAccentColor] = useState('#c8a951')
+  const [primaryColor, setPrimaryColor] = useState('#a82020')
+  const [accentColor, setAccentColor] = useState('#e11d48')
   const [position, setPosition] = useState('bottom-right')
   
   const [tooltipTr, setTooltipTr] = useState('IBU Dijital Asistanı sorularınızı yanıtlamaya hazır. 👋')
@@ -39,13 +39,13 @@ export default function WidgetPage() {
 
   // Premium themes specs
   const THEMES = {
-    default:  { name: 'Corporate Navy (Klasik)', primary: '#1a3a6b', accent: '#c8a951' },
+    default:  { name: 'IBU Crimson (Klasik Kırmızı)', primary: '#a82020', accent: '#e11d48' },
     emerald:  { name: 'Emerald Garden (Zümrüt Yeşil)', primary: '#064e3b', accent: '#34d399' },
     royal:    { name: 'Royal Amethyst (Lüks Mor)', primary: '#4c1d95', accent: '#fcd34d' },
     midnight: { name: 'Midnight Stealth (Karanlık Tema)', primary: '#0f172a', accent: '#06b6d4' },
-    crimson:  { name: 'Crimson Spark (Yakut Kırmızı)', primary: '#991b1b', accent: '#cbd5e1' },
+    crimson:  { name: 'Corporate Navy (Lacivert)', primary: '#1a3a6b', accent: '#c8a951' },
     sunset:   { name: 'Sunset Amber (Günbatımı Turuncu)', primary: '#7c2d12', accent: '#f59e0b' },
-    custom:   { name: 'Özel Renkler', primary: '#1a3a6b', accent: '#c8a951' }
+    custom:   { name: 'Özel Renkler', primary: '#a82020', accent: '#e11d48' }
   }
 
   // Helper to adjust color brightness dynamically in preview (mimics CSS gradient builder)
@@ -579,7 +579,7 @@ export default function WidgetPage() {
                 height: '58px',
                 borderRadius: '16px',
                 background: `linear-gradient(145deg, ${primaryColor}, ${adjustBrightness(primaryColor, -20)})`,
-                boxShadow: `0 8px 32px rgba(${parseInt(primaryColor.slice(1,3),16) || 26}, ${parseInt(primaryColor.slice(3,5),16) || 58}, ${parseInt(primaryColor.slice(5,7),16) || 107}, 0.45)`,
+                boxShadow: `0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)`,
               }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -664,7 +664,7 @@ export default function WidgetPage() {
                           borderRadius: m.sender === 'user' ? '16px 4px 16px 16px' : '6px 18px 18px 18px',
                           background: m.sender === 'user' ? `linear-gradient(138deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -20)} 100%)` : '#fff',
                           border: m.sender === 'bot' ? '1px solid rgba(0,0,0,0.06)' : 'none',
-                          boxShadow: m.sender === 'user' ? `0 4px 18px rgba(${parseInt(primaryColor.slice(1,3),16) || 26}, ${parseInt(primaryColor.slice(3,5),16) || 58}, ${parseInt(primaryColor.slice(5,7),16) || 107}, 0.38)` : '0 1px 4px rgba(0,0,0,0.06)',
+                          boxShadow: m.sender === 'user' ? '0 4px 12px rgba(0,0,0,0.08)' : '0 1px 4px rgba(0,0,0,0.06)',
                         }}
                       >
                         {m.text}

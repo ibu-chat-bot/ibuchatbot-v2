@@ -3,8 +3,8 @@
 
     const IBU_CONFIG = {
         apiUrl: 'https://YOUR-NEXTJS-APP.vercel.app/api/chat',
-        primaryColor: '#1a3a6b',
-        accentColor: '#c8a951',
+        primaryColor: '#a82020',
+        accentColor: '#e11d48',
         botName: 'IBU Asistan',
         theme: 'default',
         tooltipTr: 'Merhaba! IBU Dijital Asistanı sorularınızı yanıtlamaya hazır.',
@@ -18,11 +18,11 @@
     };
 
     const THEMES = {
-        default: { primary: '#1a3a6b', accent: '#c8a951' },
+        default: { primary: '#a82020', accent: '#e11d48' },
         emerald: { primary: '#064e3b', accent: '#34d399' },
         royal: { primary: '#4c1d95', accent: '#fcd34d' },
         midnight: { primary: '#0f172a', accent: '#06b6d4' },
-        crimson: { primary: '#991b1b', accent: '#cbd5e1' },
+        crimson: { primary: '#1a3a6b', accent: '#c8a951' },
         sunset: { primary: '#7c2d12', accent: '#f59e0b' }
     };
 
@@ -50,7 +50,7 @@
     );
 
     const css = `
-@keyframes ibu-pulse{0%,100%{box-shadow:0 0 0 0 rgba(${r},${g},${b},.4);}70%{box-shadow:0 0 0 10px rgba(${r},${g},${b},0);}}
+@keyframes ibu-pulse{0%,100%{box-shadow:0 0 0 0 rgba(${r},${g},${b},.15);}70%{box-shadow:0 0 0 10px rgba(${r},${g},${b},0);}}
 @keyframes ibu-pop{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
 @keyframes ibu-dots{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
 @keyframes ibu-slide{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
@@ -64,13 +64,13 @@
   background:linear-gradient(145deg,${pc},rgb(${Math.max(0, r - 45)},${Math.max(0, g - 45)},${Math.max(0, b - 45)}));
   border:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 8px 24px rgba(${r},${g},${b},.45),0 2px 8px rgba(0,0,0,.12);
+  box-shadow:0 8px 24px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
   transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;
   animation:ibu-pulse 2.8s ease-out 3.5s 3;
 }
 #ibu-fab:hover{
   transform:scale(1.06);
-  box-shadow:0 12px 32px rgba(${r},${g},${b},.55),0 4px 12px rgba(0,0,0,.14);
+  box-shadow:0 12px 32px rgba(0,0,0,.18),0 4px 12px rgba(0,0,0,.08);
 }
 #ibu-fab svg{display:block;flex-shrink:0;}
 
@@ -201,7 +201,7 @@
   background:linear-gradient(138deg,${pc} 0%,rgb(${Math.max(0, r - 50)},${Math.max(0, g - 50)},${Math.max(0, b - 50)}) 100%);
   color:#fff;
   border-radius:16px 4px 16px 16px;
-  box-shadow:0 4px 18px rgba(${r},${g},${b},.38),0 2px 6px rgba(${r},${g},${b},.18);
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 .ibu-ts-group{
   font-size:9.5px;color:#b0bec5;font-weight:400;
@@ -318,9 +318,9 @@
   border:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;
-  box-shadow:0 3px 12px rgba(${r},${g},${b},.38);
+  box-shadow:0 2px 6px rgba(0,0,0,.12);
 }
-.ibu-send:hover{transform:scale(1.08);box-shadow:0 5px 18px rgba(${r},${g},${b},.5);}
+.ibu-send:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(0,0,0,.18);}
 .ibu-send:disabled{opacity:.25;cursor:not-allowed;transform:none;box-shadow:none;}
 .ibu-send svg{display:block;}
 
@@ -365,7 +365,7 @@
     win.innerHTML = `
 <div class="ibu-hdr">
   <div class="ibu-hdr-txt">
-    <p class="ibu-hdr-name">${IBU_CONFIG.botName}</p>
+    <p class="ibu-hdr-name">${IBU_CONFIG.botName}<svg viewBox="0 0 24 24" fill="none" stroke="${ac}" stroke-width="2.2" width="14" height="14" style="margin-left:6px;display:inline-block;vertical-align:middle;flex-shrink:0;animation:ibu-pulse 2s infinite;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></p>
     <p class="ibu-hdr-sub"><span class="ibu-dot"></span><span id="ibu-st">Çevrimiçi · Aktif Asistan</span></p>
   </div>
   <div id="ibu-lang" style="display:flex;border:1px solid rgba(255,255,255,.2);border-radius:20px;overflow:hidden;font-size:9px;font-weight:700;margin-right:8px;">

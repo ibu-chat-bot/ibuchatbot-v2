@@ -9,6 +9,7 @@ import {
   Sliders, 
   LogOut, 
   MessageSquareQuote,
+  BotMessageSquare,
   User
 } from 'lucide-react'
 
@@ -31,6 +32,12 @@ export default function Sidebar() {
       name: 'Widget Üretici',
       path: '/admin/widget',
       icon: Sliders
+    },
+    {
+      name: 'Chatbot Test',
+      path: '/admin/test',
+      icon: BotMessageSquare,
+      badge: 'CANLI'
     },
     {
       name: 'Sistem Ayarları',
@@ -82,7 +89,12 @@ export default function Sidebar() {
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                <span>{item.name}</span>
+                <span className="flex-1">{item.name}</span>
+                {item.badge && (
+                  <span className="text-[8px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full px-1.5 py-0.5 tracking-wider">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             )
           })}
