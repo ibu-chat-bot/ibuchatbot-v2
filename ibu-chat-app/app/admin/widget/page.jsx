@@ -570,58 +570,62 @@ export default function WidgetPage() {
             {/* SO Chat FAB Button with local icon */}
             <button
               onClick={() => setWidgetOpen(!widgetOpen)}
-              className="absolute z-40 transition-transform active:scale-95 shadow-xl hover:scale-105 border-0 cursor-pointer flex items-center justify-center overflow-hidden"
+              className="absolute z-40 transition-transform active:scale-95 shadow-xl hover:scale-105 border-none cursor-pointer flex items-center justify-center overflow-hidden"
               style={{
                 bottom: '24px',
                 right: position === 'bottom-right' ? '24px' : 'auto',
                 left: position === 'bottom-left' ? '24px' : 'auto',
-                width: '56px',
-                height: '56px',
+                width: '62px',
+                height: '62px',
                 borderRadius: '50%',
-                background: `linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%)`,
+                background: `linear-gradient(145deg, ${primaryColor}, ${adjustBrightness(primaryColor, -20)})`,
+                boxShadow: `0 8px 32px rgba(${parseInt(primaryColor.slice(1,3),16) || 26}, ${parseInt(primaryColor.slice(3,5),16) || 58}, ${parseInt(primaryColor.slice(5,7),16) || 107}, 0.45)`,
               }}
             >
-              <img src="/logoicon.ico" alt="Logo" className="w-7 h-7 object-contain" />
+              <img src="/logoicon.ico" alt="Logo" className="w-7 h-7 object-contain brightness-0 invert" />
             </button>
 
             {/* SO Chat Window */}
             {widgetOpen && (
               <div
-                className="absolute z-50 bg-white shadow-2xl flex flex-col border border-slate-100 text-left transition-all duration-300 ease-out select-text"
+                className="absolute z-50 shadow-2xl flex flex-col border border-slate-200/50 text-left transition-all duration-300 ease-out select-text"
                 style={{
-                  bottom: '92px',
+                  bottom: '96px',
                   right: position === 'bottom-right' ? '24px' : 'auto',
                   left: position === 'bottom-left' ? '24px' : 'auto',
-                  width: '320px',
-                  height: '420px',
-                  borderRadius: '16px',
+                  width: '350px',
+                  height: '480px',
+                  borderRadius: '24px',
                   overflow: 'hidden',
-                  fontFamily: 'inherit'
+                  fontFamily: "'Inter', sans-serif",
+                  backgroundColor: '#ffffff',
                 }}
               >
                 {/* Header with gradient and logoicon.ico */}
                 <div 
-                  className="p-4 text-white flex items-center justify-between shadow-md"
+                  className="p-4 text-white flex items-center justify-between shadow-md relative overflow-hidden shrink-0"
                   style={{
-                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -25)} 100%)`,
-                    borderBottom: `2px solid ${accentColor}`
+                    background: `linear-gradient(150deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -30)} 100%)`,
                   }}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-full bg-white/25 flex items-center justify-center overflow-hidden border border-white/10">
-                      <img src="/logoicon.ico" alt="IBU" className="w-6 h-6 object-contain" />
+                  {/* Glass highlight line */}
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] opacity-70" style={{ background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }}></div>
+                  
+                  <div className="flex items-center gap-3 z-10">
+                    <div className="w-10 h-10 rounded-full bg-white/15 border border-white/25 flex items-center justify-center overflow-hidden backdrop-blur-md">
+                      <img src="/logoicon.ico" alt="IBU" className="w-6 h-6 object-contain brightness-0 invert" />
                     </div>
                     <div>
-                      <h4 className="text-[13px] font-extrabold tracking-tight font-outfit">{botName}</h4>
-                      <p className="text-[8px] text-white/80 font-medium flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block animate-pulse"></span>
-                        Aktif asistan &bull; Çevrimiçi
+                      <h4 className="text-[14px] font-extrabold tracking-tight font-outfit text-white">{botName}</h4>
+                      <p className="text-[9px] text-white/80 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
+                        Çevrimiçi • Aktif Asistan
                       </p>
                     </div>
                   </div>
                   
                   {/* Lang Switch inside preview */}
-                  <div className="flex border border-white/20 rounded-md overflow-hidden text-[9px] font-bold">
+                  <div className="flex border border-white/20 rounded-md overflow-hidden text-[8px] font-bold z-10">
                     <button
                       onClick={() => setSimLang('tr')}
                       className={`px-1.5 py-0.5 border-0 cursor-pointer text-white font-bold transition ${simLang === 'tr' ? 'bg-white/25' : 'bg-transparent'}`}
@@ -637,48 +641,59 @@ export default function WidgetPage() {
                   </div>
                 </div>
 
-                {/* Simulated Messages list */}
-                <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50 text-[11px] scrollbar-thin">
+                {/* Simulated Messages list with dot-mesh styling */}
+                <div 
+                  className="flex-1 p-4 overflow-y-auto space-y-4 text-[13px] scrollbar-thin flex flex-col"
+                  style={{
+                    background: 'linear-gradient(180deg, #f8faff 0%, #ffffff 100%)',
+                  }}
+                >
                   {messages.map((m, idx) => (
-                    <div key={idx} className="space-y-2">
-                      <div className={`flex gap-2 items-start ${m.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                        {m.sender === 'bot' ? (
-                          <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
-                            <img src="/logoicon.ico" alt="Bot" className="w-4 h-4 object-contain" />
+                    <div key={idx} className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                      {/* Avatar header for bot */}
+                      {m.sender === 'bot' && (
+                        <div className="flex items-center gap-2 mb-1.5 px-0.5">
+                          <div 
+                            className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 overflow-hidden"
+                            style={{
+                              boxShadow: `0 0 0 2px ${primaryColor}, 0 4px 12px rgba(0,0,0,0.15)`
+                            }}
+                          >
+                            <img src="/logoicon.ico" alt="Bot" className="w-5 h-5 object-contain" />
                           </div>
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-slate-350 text-slate-800 flex items-center justify-center font-extrabold text-[9px] flex-shrink-0 shadow-sm">
-                            U
-                          </div>
-                        )}
-                        <div
-                          className={`p-2.5 rounded-2xl max-w-[80%] leading-relaxed ${
-                            m.sender === 'user' 
-                              ? 'text-white rounded-tr-none shadow-sm' 
-                              : 'bg-white text-slate-700 shadow-sm rounded-tl-none border border-slate-100'
-                          }`}
-                          style={{
-                            background: m.sender === 'user' ? `linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -12)} 100%)` : ''
-                          }}
-                        >
-                          {m.text}
+                          <span className="text-[10.5px] font-bold text-slate-700" style={{ color: primaryColor }}>{botName}</span>
                         </div>
+                      )}
+
+                      <div
+                        className={`p-3 max-w-[80%] leading-relaxed ${
+                          m.sender === 'user' 
+                            ? 'text-white rounded-2xl rounded-tr-sm shadow-md' 
+                            : 'bg-white text-slate-800 rounded-2xl rounded-tl-sm border border-slate-100 shadow-sm'
+                        }`}
+                        style={{
+                          background: m.sender === 'user' ? `linear-gradient(140deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -20)} 100%)` : '',
+                          borderLeft: m.sender === 'bot' ? `3px solid ${primaryColor}` : '',
+                          boxShadow: m.sender === 'user' ? `0 6px 20px rgba(${parseInt(primaryColor.slice(1,3),16) || 26}, ${parseInt(primaryColor.slice(3,5),16) || 58}, ${parseInt(primaryColor.slice(5,7),16) || 107}, 0.35)` : '',
+                        }}
+                      >
+                        {m.text}
                       </div>
-                      
+
                       {/* Render simulated suggestions if they exist in the bot message */}
                       {m.sender === 'bot' && m.suggestions && m.suggestions.length > 0 && (
-                        <div className="pl-8 flex flex-col gap-1.5 mt-1 animate-slideIn">
-                          <span className="text-[9px] font-bold text-slate-400">
-                            {simLang === 'tr' ? 'Bununla ilgili şunları da sorabilirsiniz:' : 'Related questions you can ask:'}
+                        <div className="pl-2 flex flex-col gap-2 mt-3 w-full items-start">
+                          <span className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-wider">
+                            {simLang === 'tr' ? '💡 Bunları da sorabilirsiniz:' : '💡 You can also ask:'}
                           </span>
                           {m.suggestions.map((s, sIdx) => (
                             <button
                               key={sIdx}
                               onClick={() => handleSimQuickReply(s.replace(/^[^\s]+\s/, ''))}
-                              className="text-left px-2.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-[#1a3a6b] font-semibold rounded-lg text-[9px] w-fit max-w-full transition duration-150 active:scale-95 shadow-sm cursor-pointer"
-                              style={{ color: primaryColor }}
+                              className="text-left px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-850 font-medium rounded-xl text-[11px] w-fit max-w-full transition duration-150 active:scale-95 shadow-sm cursor-pointer flex items-center gap-1.5"
+                              style={{ border: `1.5px solid rgba(${parseInt(primaryColor.slice(1,3),16) || 26}, ${parseInt(primaryColor.slice(3,5),16) || 58}, ${parseInt(primaryColor.slice(5,7),16) || 107}, 0.18)` }}
                             >
-                              {s} &rarr;
+                              <span className="opacity-60">&rarr;</span> {s}
                             </button>
                           ))}
                         </div>
@@ -688,14 +703,22 @@ export default function WidgetPage() {
 
                   {/* Typing animation bubble */}
                   {typing && (
-                    <div className="flex gap-2 items-start">
-                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
-                        <img src="/logoicon.ico" alt="Bot" className="w-4 h-4 object-contain" />
+                    <div className="flex flex-col items-start space-y-1.5">
+                      <div className="flex items-center gap-2 px-0.5">
+                        <div 
+                          className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 overflow-hidden"
+                          style={{
+                            boxShadow: `0 0 0 2px ${primaryColor}, 0 4px 12px rgba(0,0,0,0.15)`
+                          }}
+                        >
+                          <img src="/logoicon.ico" alt="Bot" className="w-5 h-5 object-contain" />
+                        </div>
+                        <span className="text-[10.5px] font-bold text-slate-700" style={{ color: primaryColor }}>{botName}</span>
                       </div>
-                      <div className="bg-white border border-slate-100 p-2.5 rounded-xl rounded-tl-none flex gap-1 items-center shadow-sm">
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-100"></div>
-                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-200"></div>
+                      <div className="bg-white border border-slate-100 p-3 rounded-2xl rounded-tl-sm flex gap-1 items-center shadow-sm" style={{ borderLeft: `3px solid ${primaryColor}` }}>
+                        <div className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce"></div>
+                        <div className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce delay-100"></div>
+                        <div className="w-1.5 h-1.5 bg-slate-450 rounded-full animate-bounce delay-200"></div>
                       </div>
                     </div>
                   )}
@@ -703,12 +726,16 @@ export default function WidgetPage() {
 
                 {/* Simulated Quick Replies inside chat */}
                 {messages.length === 1 && !typing && (
-                  <div className="p-3 bg-slate-50 flex flex-wrap gap-1 border-t border-slate-100">
+                  <div className="px-4 py-2 bg-transparent flex gap-2 overflow-x-auto shrink-0 select-none scrollbar-none">
                     {(simLang === 'tr' ? quickRepliesTr : quickRepliesEn).map((reply, i) => (
                       <button
                         key={i}
                         onClick={() => handleSimQuickReply(reply)}
-                        className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-[9.5px] font-bold border border-slate-200 cursor-pointer transition active:scale-95 shadow-sm"
+                        className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-750 rounded-full text-[11px] font-semibold border cursor-pointer transition active:scale-95 shrink-0"
+                        style={{
+                          border: `1.5px solid rgba(${parseInt(primaryColor.slice(1,3),16) || 26}, ${parseInt(primaryColor.slice(3,5),16) || 58}, ${parseInt(primaryColor.slice(5,7),16) || 107}, 0.18)`,
+                          color: primaryColor
+                        }}
                       >
                         {reply}
                       </button>
@@ -717,9 +744,18 @@ export default function WidgetPage() {
                 )}
 
                 {/* Virtual input bar */}
-                <div className="p-3 border-t border-slate-100 bg-white flex items-center justify-between text-[10px]">
-                  <span className="text-slate-400 select-none">{simLang === 'tr' ? 'Sorunuzu yazın...' : 'Type your question...'}</span>
-                  <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border shadow-inner cursor-not-allowed select-none">&rarr;</div>
+                <div className="m-3 bg-white border border-slate-200/80 rounded-3xl flex items-center justify-between p-2 shadow-sm shrink-0">
+                  <span className="text-slate-400 select-none text-[11px] pl-2">{simLang === 'tr' ? 'Sorunuzu yazın...' : 'Type your question...'}</span>
+                  <button 
+                    disabled 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white border-0 select-none shrink-0"
+                    style={{
+                      background: `linear-gradient(140deg, ${primaryColor}, ${adjustBrightness(primaryColor, -20)})`,
+                      boxShadow: `0 4px 10px rgba(${parseInt(primaryColor.slice(1,3),16) || 26}, ${parseInt(primaryColor.slice(3,5),16) || 58}, ${parseInt(primaryColor.slice(5,7),16) || 107}, 0.35)`
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                  </button>
                 </div>
               </div>
             )}
