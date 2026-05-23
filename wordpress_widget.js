@@ -12,8 +12,8 @@
     tooltipEn:    'IBU Digital Assistant is ready to answer your questions. 👋',
     welcomeTr:    'Merhaba! 👋 Kayıt, burslar, programlar veya kampüs hakkında her türlü sorunuzu yanıtlayabilirim.',
     welcomeEn:    'Hello! 👋 I can answer your questions about enrollment, scholarships, programs, or campus life.',
-    placeholderTr:'Sorunuzu yazın...',
-    placeholderEn:'Type your question...',
+    placeholderTr:'Sorunuzu buraya yazın...',
+    placeholderEn:'Type your question here...',
     quickRepliesTr: ['📅 Kayıt tarihleri', '🎓 Burs imkânları', '📚 Programlar', '🏠 Yurt & konaklama'],
     quickRepliesEn: ['📅 Enrollment dates', '🎓 Scholarships', '📚 Programs', '🏠 Dormitory'],
   };
@@ -40,10 +40,10 @@
   // Dynamic asset loading
   const logoUrl = IBU_CONFIG.apiUrl.replace('/api/chat', '/logoicon.ico');
 
-  // Load Premium Typography from Google Fonts
+  // Load Premium Typography from Google Fonts (Outfit & Plus Jakarta Sans)
   const fontLink = document.createElement('link');
   fontLink.rel = 'stylesheet';
-  fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap';
   document.head.appendChild(fontLink);
 
   /* ---------- Yardımcı: Renk Parlaklığı (Gradient için) ---------- */
@@ -92,14 +92,14 @@
   style.textContent = `
     #ibu-chat-fab {
       position: fixed; bottom: 24px; right: 24px; z-index: 99998;
-      width: 58px; height: 58px; border-radius: 50%;
+      width: 60px; height: 60px; border-radius: 50%;
       background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%);
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
-      transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.25);
+      transition: all .3s cubic-bezier(.34,1.56,.64,1);
     }
-    #ibu-chat-fab:hover { transform: scale(1.08) rotate(3deg); box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+    #ibu-chat-fab:hover { transform: scale(1.08) rotate(5deg); box-shadow: 0 12px 35px rgba(15, 23, 42, 0.35); }
     #ibu-chat-fab img { width: 28px; height: 28px; object-fit: contain; }
     #ibu-chat-fab .ibu-badge {
       position: absolute; top: -3px; right: -3px;
@@ -109,44 +109,48 @@
     }
 
     #ibu-chat-tooltip {
-      position: fixed; bottom: 32px; right: 96px; z-index: 99997;
-      background: white; border: 1px solid #e2e8f0;
-      border-radius: 12px; padding: 12px 14px; max-width: 230px;
-      box-shadow: 0 6px 24px rgba(30, 41, 59, 0.12);
-      font-family: 'Inter', -apple-system, sans-serif;
-      font-size: 12.5px; color: #334155; line-height: 1.45;
-      display: flex; gap: 8px; align-items: flex-start;
-      opacity: 0; transform: translateX(10px); pointer-events: none;
-      transition: opacity .35s, transform .35s cubic-bezier(.34,1.56,.64,1);
+      position: fixed; bottom: 32px; right: 100px; z-index: 99997;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 16px; padding: 12px 16px; max-width: 240px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      font-size: 13px; color: #1e293b; line-height: 1.5;
+      display: flex; gap: 10px; align-items: center;
+      opacity: 0; transform: translateX(15px); pointer-events: none;
+      transition: all .4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     #ibu-chat-tooltip.ibu-show {
       opacity: 1; transform: translateX(0); pointer-events: all;
     }
     #ibu-chat-tooltip::after {
       content: ''; position: absolute; right: -6px; top: calc(50% - 6px);
-      width: 10px; height: 10px; background: white;
-      border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;
+      width: 10px; height: 10px; background: rgba(255, 255, 255, 0.95);
+      border-top: 1px solid rgba(15, 23, 42, 0.08);
+      border-right: 1px solid rgba(15, 23, 42, 0.08);
       transform: rotate(45deg);
     }
     .ibu-tooltip-close {
-      background: none; border: none; color: #94a3b8; cursor: pointer;
-      font-size: 14px; font-weight: bold; line-height: 1; padding: 0 2px;
-      margin-top: -1px;
+      background: #f1f5f9; border: none; color: #64748b; cursor: pointer;
+      font-size: 11px; font-weight: bold; width: 20px; height: 20px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s;
     }
-    .ibu-tooltip-close:hover { color: #64748b; }
+    .ibu-tooltip-close:hover { background: #e2e8f0; color: #0f172a; }
 
     #ibu-chat-window {
-      position: fixed; bottom: 92px; right: 24px; z-index: 99999;
-      width: 360px; height: 530px;
-      background: #fff; border-radius: 20px;
+      position: fixed; bottom: 96px; right: 24px; z-index: 99999;
+      width: 380px; height: 580px;
+      background: #ffffff; border-radius: 24px;
       display: flex; flex-direction: column;
-      box-shadow: 0 12px 48px rgba(30, 41, 59, 0.18);
-      border: 1px solid rgba(0,0,0,0.04);
-      transform: scale(0.8) translateY(20px);
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      transform: scale(0.9) translateY(30px);
       transform-origin: bottom right;
       opacity: 0; pointer-events: none;
-      transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s;
-      font-family: 'Inter', -apple-system, sans-serif;
+      transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity .25s;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
       overflow: hidden;
     }
     #ibu-chat-window.ibu-open {
@@ -155,104 +159,119 @@
     }
 
     .ibu-header {
-      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -25)} 100%);
-      border-bottom: 2.5px solid ${accentColor};
-      padding: 16px;
-      display: flex; align-items: center; gap: 12px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+      padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
       flex-shrink: 0;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      z-index: 10;
     }
     .ibu-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: rgba(255,255,255,0.18);
+      width: 42px; height: 42px; border-radius: 50%;
+      background: #ffffff;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      border: 1.5px solid ${accentColor}44;
+      overflow: hidden;
     }
     .ibu-avatar img { width: 26px; height: 26px; object-fit: contain; }
     .ibu-header-info { flex: 1; }
     .ibu-header-name {
-      color: #fff; font-family: 'Outfit', sans-serif;
-      font-size: 15px; font-weight: 700; margin: 0;
-      letter-spacing: -0.01em;
+      color: #0f172a; font-family: 'Outfit', sans-serif;
+      font-size: 16px; font-weight: 700; margin: 0;
+      letter-spacing: -0.02em;
     }
     .ibu-header-status {
-      color: rgba(255,255,255,0.8); font-size: 11px; margin: 3px 0 0;
-      display: flex; align-items: center; gap: 5px;
+      color: #64748b; font-size: 11px; margin: 4px 0 0;
+      display: flex; align-items: center; gap: 6px;
+      font-weight: 500;
     }
     .ibu-status-dot {
-      width: 6px; height: 6px; background: #22c55e;
+      width: 6px; height: 6px; background: #10b981;
       border-radius: 50%; display: inline-block;
       animation: ibu-pulse 2s infinite;
     }
     @keyframes ibu-pulse {
-      0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.5; }
+      0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.4; }
     }
     .ibu-close-btn {
-      background: rgba(255,255,255,0.14); border: none; border-radius: 8px;
+      background: #f1f5f9; border: none; border-radius: 50%;
       width: 32px; height: 32px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 18px; line-height: 1;
-      transition: background .15s, transform .15s;
+      color: #475569; font-size: 12px; font-weight: bold;
+      transition: all .2s;
     }
-    .ibu-close-btn:hover { background: rgba(255,255,255,0.22); transform: scale(1.05); }
+    .ibu-close-btn:hover { background: #e2e8f0; color: #0f172a; transform: rotate(90deg); }
 
     .ibu-messages {
-      flex: 1; overflow-y: auto; padding: 16px 14px;
-      display: flex; flex-direction: column; gap: 14px;
-      background: #f8fafc;
+      flex: 1; overflow-y: auto; padding: 20px 18px;
+      display: flex; flex-direction: column; gap: 18px;
+      background-color: #f8fafc;
+      background-image: radial-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+      background-size: 16px 16px;
       scroll-behavior: smooth;
     }
     .ibu-messages::-webkit-scrollbar { width: 4px; }
     .ibu-messages::-webkit-scrollbar-track { background: transparent; }
     .ibu-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-    .ibu-msg { display: flex; gap: 10px; max-width: 86%; align-items: flex-start; }
+    .ibu-msg { display: flex; gap: 12px; max-width: 86%; align-items: flex-start; }
     .ibu-msg.ibu-bot { align-self: flex-start; }
     .ibu-msg.ibu-user { align-self: flex-end; flex-direction: row-reverse; }
 
     .ibu-msg-avatar {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: #ffffff; border: 1.5px solid #e2e8f0;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #ffffff; border: 1.5px solid rgba(15, 23, 42, 0.06);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+      position: relative;
+    }
+    .ibu-msg-avatar::after {
+      content: ''; position: absolute; inset: -2px; border-radius: 50%;
+      border: 1px solid ${accentColor}33;
     }
     .ibu-msg-avatar img { width: 18px; height: 18px; object-fit: contain; }
 
     .ibu-bubble-wrapper { display: flex; flex-direction: column; flex: 1; }
 
     .ibu-bubble {
-      padding: 10px 14px; border-radius: 16px;
-      font-size: 13.5px; line-height: 1.55;
+      padding: 12px 16px; border-radius: 20px;
+      font-size: 13.5px; line-height: 1.6;
       word-break: break-word;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      font-weight: 450;
+      letter-spacing: -0.01em;
     }
     .ibu-bot .ibu-bubble {
       background: #ffffff; color: #1e293b;
-      border: 1px solid #e2e8f0;
-      border-top-left-radius: 3px;
+      border: 1px solid rgba(15, 23, 42, 0.04);
+      border-top-left-radius: 4px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
     }
     .ibu-user .ibu-bubble {
-      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -12)} 100%);
+      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%);
       color: #fff;
-      border-top-right-radius: 3px;
-      box-shadow: 0 3px 10px ${primaryColor}22;
+      border-top-right-radius: 4px;
+      box-shadow: 0 4px 14px ${primaryColor}25;
     }
     .ibu-time {
       font-size: 10px; color: #94a3b8;
-      margin-top: 5px; padding: 0 3px;
+      margin-top: 6px; padding: 0 4px;
+      font-weight: 500;
     }
     .ibu-user .ibu-time { text-align: right; }
 
     .ibu-typing-bubble {
-      display: flex; gap: 5px; align-items: center; padding: 12px 16px;
-      background: #ffffff; border-radius: 16px; border-top-left-radius: 3px;
-      border: 1px solid #e2e8f0;
-      max-width: 65px;
+      display: flex; gap: 5px; align-items: center; padding: 12px 18px;
+      background: #ffffff; border-radius: 18px; border-top-left-radius: 4px;
+      border: 1px solid rgba(15, 23, 42, 0.04);
+      max-width: 68px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
     }
     .ibu-typing-bubble span {
-      width: 7px; height: 7px; background: #cbd5e1;
+      width: 7px; height: 7px; background: #94a3b8;
       border-radius: 50%; animation: ibu-bounce 1.3s infinite;
     }
     .ibu-typing-bubble span:nth-child(2) { animation-delay: .2s; }
@@ -262,88 +281,109 @@
       30% { transform: translateY(-6px); }
     }
 
-    /* Suggestions options buttons container */
+    /* Suggestions follow-up options */
     .ibu-suggestions-container {
-      display: flex; flex-direction: column; gap: 6px;
-      margin-top: 8px; padding-left: 40px;
+      display: flex; flex-direction: column; gap: 8px;
+      margin-top: 10px; padding-left: 44px;
       animation: ibu-slide-in .3s ease-out;
     }
     .ibu-suggestions-label {
-      font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 2px;
+      font-size: 10.5px; font-weight: 700; color: #94a3b8;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      margin-bottom: 2px;
     }
     .ibu-suggestion-btn {
       background: #ffffff;
-      border: 1.5px solid #e2e8f0;
+      border: 1px solid rgba(15, 23, 42, 0.08);
       color: #334155;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 8px 13px;
-      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 9px 14px;
+      border-radius: 12px;
       cursor: pointer;
       text-align: left;
-      transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
       width: fit-content;
       max-width: 100%;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
     .ibu-suggestion-btn:hover {
       background: ${primaryColor}0a;
-      border-color: ${primaryColor}55;
+      border-color: ${primaryColor}66;
       color: ${primaryColor};
-      transform: translateX(4px);
-      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+      transform: translateX(5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
 
     .ibu-quick-replies {
-      padding: 8px 14px 10px;
-      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 6px 16px 12px;
+      display: flex; gap: 8px;
       background: #f8fafc;
-      border-top: 1px solid rgba(0,0,0,0.02);
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex-shrink: 0;
     }
+    .ibu-quick-replies::-webkit-scrollbar { display: none; }
     .ibu-qr {
-      background: #ffffff; border: 1.5px solid ${primaryColor}33;
-      color: ${primaryColor}; border-radius: 18px;
-      padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer;
-      transition: all .2s; white-space: nowrap;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      background: #ffffff; border: 1.5px solid rgba(15, 23, 42, 0.08);
+      color: #334155; border-radius: 18px;
+      padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+      transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      flex-shrink: 0;
     }
-    .ibu-qr:hover { background: ${primaryColor}; color: white; border-color: ${primaryColor}; transform: translateY(-1px); }
+    .ibu-qr:hover {
+      background: ${primaryColor};
+      color: white;
+      border-color: ${primaryColor};
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px ${primaryColor}22;
+    }
 
-    .ibu-input-row {
-      padding: 12px 14px 14px;
-      border-top: 1px solid #e2e8f0;
-      display: flex; gap: 8px; align-items: flex-end;
-      background: #fff; flex-shrink: 0;
+    /* Floating Pill Input Wrapper */
+    .ibu-input-wrapper {
+      margin: 12px 16px 16px;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 6px 6px 6px 16px;
+      display: flex; gap: 10px; align-items: center;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+      transition: all 0.2s ease-in-out;
+      flex-shrink: 0;
+    }
+    .ibu-input-wrapper:focus-within {
+      border-color: ${primaryColor};
+      box-shadow: 0 0 0 4px ${primaryColor}1a, 0 6px 16px rgba(15, 23, 42, 0.06);
     }
     .ibu-input {
-      flex: 1; border: 1.5px solid #e2e8f0; border-radius: 22px;
-      padding: 9px 15px; font-size: 13.5px;
-      background: #f8fafc; color: #1e293b;
-      outline: none; resize: none; max-height: 90px; min-height: 40px;
-      line-height: 1.4; font-family: inherit;
-      transition: all .15s;
-      overflow-y: auto;
+      flex: 1; border: none; background: transparent;
+      font-size: 13.5px; color: #1e293b;
+      outline: none; resize: none; max-height: 90px; min-height: 24px;
+      line-height: 1.5; font-family: inherit;
     }
-    .ibu-input:focus { border-color: ${primaryColor}; background: #fff; box-shadow: 0 0 0 3px ${primaryColor}1a; }
     .ibu-input::placeholder { color: #94a3b8; }
+    
     .ibu-send {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -12)} 100%);
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%);
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: opacity .15s, transform .15s;
-      box-shadow: 0 3px 8px ${primaryColor}25;
+      flex-shrink: 0; transition: all .2s;
+      box-shadow: 0 3px 8px ${primaryColor}33;
     }
-    .ibu-send:hover { opacity: .92; transform: scale(1.05); }
+    .ibu-send:hover { transform: scale(1.05); }
     .ibu-send:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
-    .ibu-send svg { width: 17px; height: 17px; fill: white; }
+    .ibu-send svg { width: 15px; height: 15px; fill: white; }
 
     .ibu-powered {
       text-align: center; font-size: 10px; color: #94a3b8;
-      padding: 4px 0 8px; flex-shrink: 0;
+      padding: 0 0 10px; flex-shrink: 0;
       background: #ffffff;
-      border-top: 1px solid rgba(0,0,0,0.01);
-      font-weight: 500;
+      font-weight: 600;
+      letter-spacing: 0.02em;
     }
 
     @keyframes ibu-slide-in {
@@ -352,7 +392,7 @@
     }
 
     @media (max-width: 480px) {
-      #ibu-chat-window { width: calc(100vw - 16px); right: 8px; bottom: 80px; height: calc(100vh - 100px); }
+      #ibu-chat-window { width: calc(100vw - 16px); right: 8px; bottom: 80px; height: calc(100vh - 100px); border-radius: 20px; }
       #ibu-chat-fab { right: 16px; bottom: 16px; }
       #ibu-chat-tooltip { right: 84px; bottom: 24px; max-width: 200px; }
     }
@@ -398,7 +438,7 @@
     </div>
     <div class="ibu-messages" id="ibu-messages"></div>
     <div class="ibu-quick-replies" id="ibu-qr"></div>
-    <div class="ibu-input-row">
+    <div class="ibu-input-wrapper">
       <textarea class="ibu-input" id="ibu-input" rows="1"
         placeholder="${IBU_CONFIG.placeholderTr}"></textarea>
       <button class="ibu-send" id="ibu-send" aria-label="Gönder">
