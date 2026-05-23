@@ -251,48 +251,50 @@ export default function WidgetPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0f1e] via-[#0f172a] to-[#1a0f2e] -m-6 p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-outfit font-extrabold text-2xl text-slate-800 tracking-tight flex items-center gap-2.5">
-          <Sliders className="w-6 h-6 text-[#1a3a6b]" />
-          <span>Widget Kod Üretici</span>
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">WordPress web sitenize yerleştireceğiniz canlı sohbet aracını özelleştirin ve entegrasyon kodunu kopyalayın</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="font-outfit font-black text-3xl text-white tracking-tight flex items-center gap-3">
+            <Sliders className="w-7 h-7 text-violet-400" />
+            <span>Widget Kod Üretici</span>
+            <span className="bg-white/10 border border-white/20 text-white/70 text-[10px] px-2 py-0.5 rounded-full font-sans font-semibold">v2.0</span>
+          </h1>
+          <p className="text-sm text-slate-400 mt-1.5">WordPress web sitenize yerleştireceğiniz canlı sohbet aracını özelleştirin ve entegrasyon kodunu kopyalayın</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {/* Left Side: Customization Form */}
-        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-6 max-h-[75vh] overflow-y-auto pr-4">
-          <h2 className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b pb-3 flex items-center gap-2">
+        <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-6 space-y-6 max-h-[75vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+          <h2 className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] border-b border-white/10 pb-3 flex items-center gap-2">
             <span>Özelleştirme Parametreleri</span>
           </h2>
 
           {/* Core Configuration */}
-          <div className="space-y-4">
+          <div className="space-y-5">
             {/* Premium Themes Selector */}
-            <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
-              <label className="text-[10px] font-bold text-slate-650 uppercase tracking-wider flex items-center gap-1.5">
-                <Palette className="w-4 h-4 text-[#1a3a6b]" />
+            <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-3">
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-violet-400" />
                 <span>👑 Ultra Premium Görünüm Temaları</span>
               </label>
-              
               <div className="grid grid-cols-2 gap-2">
                 {Object.keys(THEMES).map((key) => (
                   <button
                     key={key}
                     type="button"
                     onClick={() => setTheme(key)}
-                    className={`flex flex-col text-left p-2.5 rounded-lg border text-[11px] font-semibold transition active:scale-[0.98] cursor-pointer ${
-                      theme === key 
-                        ? 'border-[#1a3a6b] bg-blue-50/50 shadow-sm text-slate-800' 
-                        : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                    className={`flex flex-col text-left p-3 rounded-xl border text-[11px] font-semibold transition-all duration-200 active:scale-[0.97] cursor-pointer ${
+                      theme === key
+                        ? 'bg-white/15 border-white/30 ring-2 ring-white/20 shadow-lg'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
                     }`}
                   >
-                    <span className="font-bold text-[11px]">{THEMES[key].name}</span>
-                    <div className="flex gap-1.5 items-center mt-2">
-                      <div className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: THEMES[key].primary }} />
-                      <div className="w-3.5 h-3.5 rounded-full border border-black/10" style={{ backgroundColor: THEMES[key].accent }} />
+                    <span className={`font-bold text-[11px] ${theme === key ? 'text-white/90' : 'text-white/50'}`}>{THEMES[key].name}</span>
+                    <div className="flex gap-2 items-center mt-2">
+                      <div className="w-5 h-5 rounded-full border border-black/20 shadow-lg" style={{ backgroundColor: THEMES[key].primary, boxShadow: `0 0 8px ${THEMES[key].primary}60` }} />
+                      <div className="w-5 h-5 rounded-full border border-black/20 shadow-lg" style={{ backgroundColor: THEMES[key].accent, boxShadow: `0 0 8px ${THEMES[key].accent}60` }} />
                     </div>
                   </button>
                 ))}
@@ -301,73 +303,75 @@ export default function WidgetPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Bot Adı</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">Bot Adı</label>
                 <input
                   type="text"
                   value={botName}
                   onChange={(e) => setBotName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2.5 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-700 font-semibold"
+                  className="w-full bg-white/8 border border-white/15 text-white text-sm py-2.5 px-3 rounded-xl outline-none focus:border-white/40 focus:bg-white/12 placeholder-white/25 transition-all"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Widget Konumu</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">Widget Konumu</label>
                 <select
                   value={position}
                   onChange={(e) => setPosition(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2.5 px-3 rounded-lg outline-none cursor-pointer focus:border-[#1a3a6b] text-slate-650 font-semibold"
+                  className="w-full bg-white/8 border border-white/15 text-white text-sm py-2.5 px-3 rounded-xl outline-none cursor-pointer focus:border-white/40 transition-all"
                 >
-                  <option value="bottom-right">Sağ Alt Köşe</option>
-                  <option value="bottom-left">Sol Alt Köşe</option>
+                  <option value="bottom-right" className="bg-slate-900">Sağ Alt Köşe</option>
+                  <option value="bottom-left" className="bg-slate-900">Sol Alt Köşe</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">API URL (Next.js Rotası)</label>
+              <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">API URL (Next.js Rotası)</label>
               <input
                 type="text"
                 value={apiUrl}
                 onChange={(e) => setApiUrl(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 text-xs py-2.5 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-505 font-mono"
+                className="w-full bg-white/8 border border-white/15 text-white/70 text-xs py-2.5 px-3 rounded-xl outline-none focus:border-white/40 font-mono transition-all"
               />
             </div>
 
             {/* Colors picker - Only show inputs if custom is chosen */}
             {theme === 'custom' && (
-              <div className="grid grid-cols-2 gap-4 animate-fadeIn">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Ana Renk (Primary)</label>
+                  <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">Ana Renk (Primary)</label>
                   <div className="flex gap-2 items-center">
                     <input
                       type="color"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="w-8 h-8 rounded-lg cursor-pointer border border-slate-205 p-0"
+                      className="w-9 h-9 rounded-xl cursor-pointer border-0 p-0"
+                      style={{ boxShadow: `0 0 12px ${primaryColor}80` }}
                     />
                     <input
                       type="text"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
-                      className="flex-1 bg-slate-50 border border-slate-200 text-xs py-1.5 px-2 rounded-lg font-mono"
+                      className="flex-1 bg-white/8 border border-white/15 text-white/70 text-xs py-2 px-2.5 rounded-xl font-mono outline-none focus:border-white/40"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">İkincil Renk (Accent)</label>
+                  <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">İkincil Renk (Accent)</label>
                   <div className="flex gap-2 items-center">
                     <input
                       type="color"
                       value={accentColor}
                       onChange={(e) => setAccentColor(e.target.value)}
-                      className="w-8 h-8 rounded-lg cursor-pointer border border-slate-205 p-0"
+                      className="w-9 h-9 rounded-xl cursor-pointer border-0 p-0"
+                      style={{ boxShadow: `0 0 12px ${accentColor}80` }}
                     />
                     <input
                       type="text"
                       value={accentColor}
                       onChange={(e) => setAccentColor(e.target.value)}
-                      className="flex-1 bg-slate-50 border border-slate-200 text-xs py-1.5 px-2 rounded-lg font-mono"
+                      className="flex-1 bg-white/8 border border-white/15 text-white/70 text-xs py-2 px-2.5 rounded-xl font-mono outline-none focus:border-white/40"
                     />
                   </div>
                 </div>
@@ -375,134 +379,84 @@ export default function WidgetPage() {
             )}
 
             {/* Welcome notification closed tooltip */}
-            <div className="space-y-4 pt-4 border-t border-slate-100">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">💬 Sohbet Bildirim Balonu (FAB Tooltip)</span>
-              
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <span className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] block">💬 Sohbet Bildirim Balonu</span>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Türkçe Bildirim Metni</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">Türkçe Bildirim Metni</label>
                 <textarea
                   rows={2}
                   value={tooltipTr}
                   onChange={(e) => setTooltipTr(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-650 resize-none font-semibold"
+                  className="w-full bg-white/8 border border-white/15 text-white text-xs py-2 px-3 rounded-xl outline-none focus:border-white/40 resize-none transition-all"
                 />
               </div>
-
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">İngilizce Bildirim Metni</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">İngilizce Bildirim Metni</label>
                 <textarea
                   rows={2}
                   value={tooltipEn}
                   onChange={(e) => setTooltipEn(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-650 resize-none font-semibold"
+                  className="w-full bg-white/8 border border-white/15 text-white text-xs py-2 px-3 rounded-xl outline-none focus:border-white/40 resize-none transition-all"
                 />
               </div>
             </div>
 
             {/* Welcome messages */}
-            <div className="space-y-4 pt-4 border-t border-slate-100">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">Karşılama Mesajları</span>
-              
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <span className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] block">Karşılama Mesajları</span>
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Türkçe Hoş Geldiniz Mesajı</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">Türkçe Hoş Geldiniz Mesajı</label>
                 <textarea
                   rows={2}
                   value={welcomeTr}
                   onChange={(e) => setWelcomeTr(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-600 resize-none"
+                  className="w-full bg-white/8 border border-white/15 text-white text-xs py-2 px-3 rounded-xl outline-none focus:border-white/40 resize-none transition-all"
                 />
               </div>
-
               <div>
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">İngilizce Hoş Geldiniz Mesajı</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block mb-1.5">İngilizce Hoş Geldiniz Mesajı</label>
                 <textarea
                   rows={2}
                   value={welcomeEn}
                   onChange={(e) => setWelcomeEn(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-600 resize-none"
+                  className="w-full bg-white/8 border border-white/15 text-white text-xs py-2 px-3 rounded-xl outline-none focus:border-white/40 resize-none transition-all"
                 />
               </div>
             </div>
 
             {/* Quick replies */}
-            <div className="space-y-4 pt-4 border-t border-slate-100">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">Hızlı Karar Butonları</span>
-              
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <span className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] block">Hızlı Karar Butonları</span>
               {/* TR buttons list */}
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Türkçe Butonlar</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block">Türkçe Butonlar</label>
                 <div className="flex flex-wrap gap-1.5">
                   {quickRepliesTr.map((btn, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-bold border border-slate-200">
+                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/10 border border-white/20 text-white/80 rounded-lg text-[10px] font-semibold">
                       <span>{btn}</span>
-                      <button
-                        type="button"
-                        onClick={() => setQuickRepliesTr(quickRepliesTr.filter((_, idx) => idx !== i))}
-                        className="text-slate-400 hover:text-red-500 font-bold transition ml-0.5"
-                      >
-                        &times;
-                      </button>
+                      <button type="button" onClick={() => setQuickRepliesTr(quickRepliesTr.filter((_, idx) => idx !== i))} className="text-white/30 hover:text-red-400 font-bold transition ml-0.5">&times;</button>
                     </span>
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Yeni Türkçe buton ekle..."
-                    value={newQuickTr}
-                    onChange={(e) => setNewQuickTr(e.target.value)}
-                    className="flex-1 bg-slate-50 border border-slate-200 text-xs py-1.5 px-3 rounded-lg outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!newQuickTr.trim()) return
-                      setQuickRepliesTr([...quickRepliesTr, newQuickTr.trim()])
-                      setNewQuickTr('')
-                    }}
-                    className="px-3 bg-[#1a3a6b] hover:bg-[#152d57] text-white rounded-lg text-xs font-bold transition cursor-pointer"
-                  >
-                    Ekle
-                  </button>
+                  <input type="text" placeholder="Yeni Türkçe buton ekle..." value={newQuickTr} onChange={(e) => setNewQuickTr(e.target.value)} className="flex-1 bg-white/8 border border-white/15 text-white placeholder-white/25 text-xs py-1.5 px-3 rounded-xl outline-none focus:border-white/40" />
+                  <button type="button" onClick={() => { if (!newQuickTr.trim()) return; setQuickRepliesTr([...quickRepliesTr, newQuickTr.trim()]); setNewQuickTr('') }} className="px-3 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-bold transition cursor-pointer">Ekle</button>
                 </div>
               </div>
-
               {/* EN buttons list */}
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">İngilizce Butonlar</label>
+                <label className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] block">İngilizce Butonlar</label>
                 <div className="flex flex-wrap gap-1.5">
                   {quickRepliesEn.map((btn, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-bold border border-slate-200">
+                    <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/10 border border-white/20 text-white/80 rounded-lg text-[10px] font-semibold">
                       <span>{btn}</span>
-                      <button
-                        type="button"
-                        onClick={() => setQuickRepliesEn(quickRepliesEn.filter((_, idx) => idx !== i))}
-                        className="text-slate-400 hover:text-red-500 font-bold transition ml-0.5"
-                      >
-                        &times;
-                      </button>
+                      <button type="button" onClick={() => setQuickRepliesEn(quickRepliesEn.filter((_, idx) => idx !== i))} className="text-white/30 hover:text-red-400 font-bold transition ml-0.5">&times;</button>
                     </span>
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Yeni İngilizce buton ekle..."
-                    value={newQuickEn}
-                    onChange={(e) => setNewQuickEn(e.target.value)}
-                    className="flex-1 bg-slate-50 border border-slate-200 text-xs py-1.5 px-3 rounded-lg outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!newQuickEn.trim()) return
-                      setQuickRepliesEn([...quickRepliesEn, newQuickEn.trim()])
-                      setNewQuickEn('')
-                    }}
-                    className="px-3 bg-[#1a3a6b] hover:bg-[#152d57] text-white rounded-lg text-xs font-bold transition cursor-pointer"
-                  >
-                    Ekle
-                  </button>
+                  <input type="text" placeholder="Yeni İngilizce buton ekle..." value={newQuickEn} onChange={(e) => setNewQuickEn(e.target.value)} className="flex-1 bg-white/8 border border-white/15 text-white placeholder-white/25 text-xs py-1.5 px-3 rounded-xl outline-none focus:border-white/40" />
+                  <button type="button" onClick={() => { if (!newQuickEn.trim()) return; setQuickRepliesEn([...quickRepliesEn, newQuickEn.trim()]); setNewQuickEn('') }} className="px-3 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-bold transition cursor-pointer">Ekle</button>
                 </div>
               </div>
             </div>
@@ -510,24 +464,24 @@ export default function WidgetPage() {
         </div>
 
         {/* Right Side: Webpage Simulated functional live widget */}
-        <div className="bg-slate-900/5 border border-slate-200 p-1 rounded-xl shadow-sm h-[75vh] flex flex-col overflow-hidden relative group">
+        <div className="bg-black/30 border border-white/10 backdrop-blur-sm rounded-2xl p-1 h-[75vh] flex flex-col overflow-hidden relative">
           {/* Virtual browser header */}
-          <div className="bg-slate-200/80 px-4 py-2 border-b flex items-center justify-between text-xs text-slate-500">
+          <div className="bg-white/5 border-b border-white/10 px-4 py-2 flex items-center justify-between text-xs text-white/40">
             <div className="flex gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
               <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
-              <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
             </div>
-            <div className="bg-white border rounded-md px-12 py-0.5 text-[9px] font-mono select-none">
+            <div className="bg-white/10 border border-white/15 text-white/50 rounded-md px-12 py-0.5 text-[9px] font-mono select-none">
               https://www.ibu.edu.mk (Simüle Sayfa)
             </div>
             <div className="w-8"></div>
           </div>
 
           {/* Webpage Content Simulation */}
-          <div className="flex-1 p-8 flex flex-col justify-center items-center text-center bg-slate-55 relative select-none">
-            <h3 className="font-outfit font-extrabold text-base text-slate-400">Uluslararası Balkan Üniversitesi</h3>
-            <p className="text-[11px] text-slate-350 mt-1 max-w-sm leading-relaxed font-medium">
+          <div className="flex-1 p-8 flex flex-col justify-center items-center text-center bg-gradient-to-br from-slate-900/50 to-slate-800/30 relative select-none">
+            <h3 className="font-outfit font-black text-lg text-white/20">Uluslararası Balkan Üniversitesi</h3>
+            <p className="text-[11px] text-white/15 mt-1 max-w-sm leading-relaxed font-medium">
               Widget Canlı Önizlemesi. İkon butonuna tıklayarak yeni özellikleri test edebilirsiniz.
             </p>
 
@@ -764,38 +718,34 @@ export default function WidgetPage() {
       </div>
 
       {/* Script block & download triggers */}
-      <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
+      <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-6 rounded-2xl shadow-2xl space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div>
-            <h3 className="font-bold text-sm text-[#1a3a6b] flex items-center gap-1.5">
-              <Code className="w-5 h-5 text-[#1a3a6b]" />
+            <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
+              <Code className="w-5 h-5 text-violet-400" />
               <span>Entegrasyon Çıktı Kodu</span>
             </h3>
-            <p className="text-xs text-slate-450 mt-1">Yapılandırmanıza göre küçültülmüş (minified) web kodu. Sıkıştırma boyutu: <span className="font-semibold text-slate-605 font-mono">{minifiedSize}</span></p>
+            <p className="text-xs text-slate-400 mt-1">Yapılandırmanıza göre küçülttülmüş (minified) web kodu. Sıkıştırma boyutu: <span className="font-semibold text-emerald-400 font-mono">{minifiedSize}</span></p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {/* Primary Action Button */}
             <button
               onClick={handleCopy}
-              className="flex items-center gap-1.5 bg-[#1a3a6b] hover:bg-[#152d57] active:scale-[0.98] text-white font-semibold py-2 px-4 rounded-lg text-xs shadow-md transition cursor-pointer"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 active:scale-[0.97] text-white font-semibold py-2 px-4 rounded-xl text-xs shadow-lg shadow-blue-500/25 transition-all duration-200 cursor-pointer"
             >
-              {copied ? <Check className="w-4 h-4 text-ibu-gold" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
               <span>{copied ? 'Kopyalandı! ✓' : 'Kodu Kopyala'}</span>
             </button>
-
-            {/* Secondary Action - Outline Variant */}
             <button
               onClick={handleDownloadJs}
-              className="flex items-center gap-1.5 border border-[#1a3a6b] text-[#1a3a6b] hover:bg-slate-50 font-semibold py-2 px-4 rounded-lg text-xs transition cursor-pointer"
+              className="flex items-center gap-1.5 bg-white/10 border border-white/20 text-white hover:bg-white/15 font-semibold py-2 px-4 rounded-xl text-xs transition-all cursor-pointer"
             >
               <FileDown className="w-4 h-4" />
               <span>.js Dosyası İndir</span>
             </button>
-
             <button
               onClick={handleDownloadPlugin}
-              className="flex items-center gap-1.5 bg-ibu-gold hover:bg-ibu-gold/90 text-[#1a3a6b] font-bold py-2 px-4 rounded-lg text-xs shadow-md transition cursor-pointer"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-lg shadow-amber-500/25 transition-all cursor-pointer"
             >
               <ShieldCheck className="w-4 h-4" />
               <span>WordPress Eklentisi İndir (.ZIP)</span>
@@ -806,7 +756,7 @@ export default function WidgetPage() {
         {/* Code display */}
         <div className="relative">
           {loadingCode ? (
-            <div className="w-full h-44 bg-slate-50 border border-slate-200 animate-pulse rounded-xl flex items-center justify-center text-xs text-slate-400 font-semibold">
+            <div className="w-full h-44 bg-white/5 border border-white/10 animate-pulse rounded-xl flex items-center justify-center text-xs text-white/30 font-semibold">
               Kod derleniyor...
             </div>
           ) : (
@@ -814,23 +764,23 @@ export default function WidgetPage() {
               readOnly
               value={generatedCode}
               rows={6}
-              className="w-full bg-slate-900 border-0 text-amber-200 placeholder-slate-500 font-mono text-[10px] p-4 rounded-xl outline-none resize-none shadow-inner"
+              className="w-full bg-[#0d1117] border border-white/10 text-emerald-400 placeholder-slate-500 font-mono text-[10px] p-4 rounded-xl outline-none resize-none"
             />
           )}
         </div>
 
         {/* WordPress instructions */}
-        <div className="bg-slate-50 border border-slate-200 p-5 rounded-xl space-y-3">
-          <h4 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-            <HelpCircle className="w-4 h-4 text-[#1a3a6b]" />
+        <div className="bg-white/5 border border-white/10 p-5 rounded-xl space-y-3">
+          <h4 className="text-xs font-bold text-white/80 flex items-center gap-1.5">
+            <HelpCircle className="w-4 h-4 text-violet-400" />
             <span>WordPress Kurulum Kılavuzu</span>
           </h4>
-          <ol className="list-decimal pl-5 text-[11px] text-slate-500 space-y-2 leading-relaxed">
+          <ol className="list-decimal pl-5 text-[11px] text-slate-400 space-y-2 leading-relaxed">
             <li>
-              <span className="font-bold text-slate-750">WordPress Eklentisi Yöntemi (Önerilen):</span> "WordPress Eklentisi İndir (.ZIP)" butonuna tıklayarak zip dosyasını bilgisayarınıza indirin. WordPress sitenizde Eklentiler &gt; Yeni Ekle &gt; Eklenti Yükle bölümünden yükleyip etkinleştirin. Widget anında tüm sitenizde yayına girecektir!
+              <span className="font-bold text-white/70">WordPress Eklentisi Yöntemi (Tavsiye Edilen):</span> "WordPress Eklentisi İndir (.ZIP)" butonuyla zip dosyasını indirin. WordPress Eklentiler &gt; Yeni Ekle &gt; Eklenti Yükle bölümünden yükleyip etkinleştirin.
             </li>
             <li>
-              <span className="font-bold text-slate-750">WPCode veya footer.php Yöntemi:</span> Yukarıdaki "Kodu Kopyala" butonuyla entegrasyon scriptini panonuza alın. WordPress admin panelinde <span className="font-semibold text-slate-600">WPCode</span> (veya benzeri bir Script Adder) eklentisine gidin, yeni JavaScript snippet oluşturarak konumu "Footer" seçip kaydedin.
+              <span className="font-bold text-white/70">WPCode veya footer.php Yöntemi:</span> "Kodu Kopyala" butonuyla scripti panonuza alın. <span className="font-semibold text-white/50">WPCode</span> eklentisinde yeni JavaScript snippet oluşturarak konumu "Footer" seçip kaydedin.
             </li>
           </ol>
         </div>
