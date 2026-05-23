@@ -1,0 +1,31 @@
+Soru: Kayıt tarihleri ne zaman?
+Cevap: Güz dönemi kayıtları Temmuz-Eylül, Bahar dönemi Ocak-Şubat arasındadır. Detaylı bilgi için öğrenci işleri ile iletişime geçebilirsiniz.
+Kategori: kayit
+
+Soru: Burs başvurusu nasıl yapılır?
+Cevap: Burs başvuruları online portal üzerinden yapılmaktadır. Lütfen scholarships.ibu.edu.mk adresini ziyaret edin ve formu doldurun.
+Kategori: burs
+
+Soru: Yurt imkanları nelerdir?
+Cevap: Uluslararası Balkan Üniversitesi bünyesinde veya anlaşmalı öğrenci yurtları bulunmaktadır. Yurt kayıtları kayıt döneminde aktif hale gelmektedir.
+Kategori: yurt
+
+Soru: Üniversitenin iletişim bilgileri nedir?
+Cevap: E-posta: info@ibu.edu.mk, Telefon: +389 2 246 2250, Adres: Ilindenska bb, 1200 Üsküp / Kuzey Makedonya.
+Kategori: iletisim
+
+Question: When are the enrollment dates?
+Answer: Fall semester enrollment is between July and September. Spring semester enrollment is between January and February.
+Category: enrollment
+
+Question: How can I apply for scholarships?
+Answer: Scholarship applications are submitted online. Please visit scholarships.ibu.edu.mk to fill out the form.
+Category: scholarship
+
+Question: What are the accommodation/dormitory options?
+Answer: International Balkan University has modern student dormitories and partner accommodation facilities. Registration opens during the enrollment period.
+Category: dormitory
+
+Question: What is the contact information of the university?
+Answer: Email: info@ibu.edu.mk, Phone: +389 2 246 2250, Address: Ilindenska bb, 1200 Skopje, North Macedonia.
+Category: contact
