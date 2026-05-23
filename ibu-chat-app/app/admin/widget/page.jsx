@@ -32,7 +32,7 @@ export default function WidgetPage() {
   const [copied, setCopied] = useState(false)
   
   // Simulated widget states
-  const [widgetOpen, setWidgetOpen] = useState(false)
+  const [widgetOpen, setWidgetOpen] = useState(true)
   const [simLang, setSimLang] = useState('tr')
   const [messages, setMessages] = useState([])
   const [typing, setTyping] = useState(false)
