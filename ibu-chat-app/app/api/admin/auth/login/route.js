@@ -3,11 +3,11 @@ import { verifyPassword, createToken } from '../../../../../lib/auth'
 export async function POST(req) {
   try {
     const { username, password } = await req.json()
-    const expectedUsername = process.env.ADMIN_USERNAME || 'ibu_admin'
+    const expectedUsername = (process.env.ADMIN_USERNAME || 'ibu_admin').trim()
 
     console.log(`[DEBUG LOGIN] Attempting login: Input Username='${username}', Expected='${expectedUsername}'`)
 
-    if (username !== expectedUsername) {
+    if (username.trim() !== expectedUsername) {
       console.warn(`[DEBUG LOGIN] Username mismatch: '${username}' !== '${expectedUsername}'`)
       return Response.json(
         { error: 'Kullanıcı adı veya şifre hatalı' },
