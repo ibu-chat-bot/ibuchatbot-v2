@@ -48,6 +48,35 @@ export default function WidgetPage() {
     custom:   { name: 'Özel Renkler', primary: '#1a3a6b', accent: '#c8a951' }
   }
 
+  // Helper to adjust color brightness dynamically in preview (mimics CSS gradient builder)
+  const adjustBrightness = (hex, percent) => {
+    let hexClean = hex.replace('#', '')
+    if (hexClean.length === 3) {
+      hexClean = hexClean[0] + hexClean[0] + hexClean[1] + hexClean[1] + hexClean[2] + hexClean[2]
+    }
+    let R = parseInt(hexClean.substring(0, 2), 16)
+    let G = parseInt(hexClean.substring(2, 4), 16)
+    let B = parseInt(hexClean.substring(4, 6), 16)
+
+    R = parseInt((R * (100 + percent)) / 100)
+    G = parseInt((G * (100 + percent)) / 100)
+    B = parseInt((B * (100 + percent)) / 100)
+
+    R = R < 255 ? R : 255
+    G = G < 255 ? G : 255
+    B = B < 255 ? B : 255
+
+    R = R > 0 ? R : 0
+    G = G > 0 ? G : 0
+    B = B > 0 ? B : 0
+
+    const rHex = R.toString(16).padStart(2, '0')
+    const gHex = G.toString(16).padStart(2, '0')
+    const bHex = B.toString(16).padStart(2, '0')
+
+    return `#${rHex}${gHex}${bHex}`
+  }
+
   // Update colors when preset theme is selected
   useEffect(() => {
     if (theme !== 'custom' && THEMES[theme]) {
@@ -112,6 +141,7 @@ export default function WidgetPage() {
       {
         sender: 'bot',
         text: simLang === 'tr' ? welcomeTr : welcomeEn,
+        suggestions: []
       }
     ])
   }, [simLang, welcomeTr, welcomeEn, widgetOpen])
@@ -178,19 +208,44 @@ export default function WidgetPage() {
     // 2. Simulate bot typing
     setTimeout(() => {
       let botResponse = ''
+      let suggestions = []
       if (simLang === 'tr') {
-        if (text.includes('Kayıt')) botResponse = 'Güz dönemi kayıtları Temmuz-Eylül, Bahar dönemi ise Ocak-Şubat arasındadır.'
-        else if (text.includes('Burs')) botResponse = 'Üniversitemiz başarılı öğrencilere %100\'e varan akademik başarı bursları sunmaktadır.'
-        else if (text.includes('Program')) botResponse = 'Mühendislik, Mimarlık, İktisat ve Eğitim fakültelerimiz hakkında detaylı broşürleri web sitemizde bulabilirsiniz.'
-        else botResponse = 'Bu simüle yanıttır. Gerçek sistemde bu soru veritabanı anlamsal araması ile eşleştirilir.'
+        if (text.includes('Kayıt')) {
+          botResponse = 'Güz dönemi kayıtları Temmuz-Eylül, Bahar dönemi ise Ocak-Şubat arasındadır.'
+          suggestions = ['📄 Kayıt için gerekli evraklar nelerdir?', '🎓 Lise diploması ile kayıt nasıl yapılır?']
+        }
+        else if (text.includes('Burs')) {
+          botResponse = 'Üniversitemiz başarılı öğrencilere %100\'e varan akademik başarı bursları sunmaktadır.'
+          suggestions = ['📋 Burs şartları nelerdir?', '🏢 ÖSYM bursları geçerli mi?']
+        }
+        else if (text.includes('Program')) {
+          botResponse = 'Mühendislik, Mimarlık, İktisat ve Eğitim fakültelerimiz hakkında detaylı broşürleri web sitemizde bulabilirsiniz.'
+          suggestions = ['⚙️ Hangi mühendislik bölümleri var?', '🩺 Tıp fakültesi barajı kaç?']
+        }
+        else {
+          botResponse = 'Bu simüle yanıttır. Gerçek sistemde bu soru veritabanı anlamsal araması ile eşleştirilir.'
+          suggestions = ['📅 Kayıt tarihleri nedir?', '🎓 Burs imkânları nelerdir?']
+        }
       } else {
-        if (text.includes('Enrollment')) botResponse = 'Fall enrollment is between July and September. Spring enrollment is in January.'
-        else if (text.includes('Scholarship')) botResponse = 'IBU offers dynamic academic scholarship plans covering up to 100% tuition.'
-        else if (text.includes('Program')) botResponse = 'Explore our premium faculties in Engineering, Architecture, Economics, and Social Sciences.'
-        else botResponse = 'This is a simulated reply. In production, this matches semantic database records.'
+        if (text.includes('Enrollment')) {
+          botResponse = 'Fall enrollment is between July and September. Spring enrollment is in January.'
+          suggestions = ['📄 What are the required documents?', '🎓 How to apply without exams?']
+        }
+        else if (text.includes('Scholarship')) {
+          botResponse = 'IBU offers dynamic academic scholarship plans covering up to 100% tuition.'
+          suggestions = ['📋 What are the scholarship requirements?', '🏢 Do you have sibling discounts?']
+        }
+        else if (text.includes('Program')) {
+          botResponse = 'Explore our premium faculties in Engineering, Architecture, Economics, and Social Sciences.'
+          suggestions = ['⚙️ Which engineering programs exist?', '🎓 Do you offer doctorate degrees?']
+        }
+        else {
+          botResponse = 'This is a simulated reply. In production, this matches semantic database records.'
+          suggestions = ['📅 Enrollment dates', '🎓 Scholarships']
+        }
       }
 
-      setMessages(prev => [...prev, { sender: 'bot', text: botResponse }])
+      setMessages(prev => [...prev, { sender: 'bot', text: botResponse, suggestions }])
       setTyping(false)
     }, 1200)
   }
@@ -274,7 +329,7 @@ export default function WidgetPage() {
                 type="text"
                 value={apiUrl}
                 onChange={(e) => setApiUrl(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 text-xs py-2.5 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-500 font-mono"
+                className="w-full bg-slate-50 border border-slate-200 text-xs py-2.5 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-505 font-mono"
               />
             </div>
 
@@ -329,7 +384,7 @@ export default function WidgetPage() {
                   rows={2}
                   value={tooltipTr}
                   onChange={(e) => setTooltipTr(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-600 resize-none font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-650 resize-none font-semibold"
                 />
               </div>
 
@@ -339,7 +394,7 @@ export default function WidgetPage() {
                   rows={2}
                   value={tooltipEn}
                   onChange={(e) => setTooltipEn(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-600 resize-none font-medium"
+                  className="w-full bg-slate-50 border border-slate-200 text-xs py-2 px-3 rounded-lg outline-none focus:border-[#1a3a6b] text-slate-650 resize-none font-semibold"
                 />
               </div>
             </div>
@@ -470,9 +525,9 @@ export default function WidgetPage() {
           </div>
 
           {/* Webpage Content Simulation */}
-          <div className="flex-1 p-8 flex flex-col justify-center items-center text-center bg-slate-50 relative select-none">
+          <div className="flex-1 p-8 flex flex-col justify-center items-center text-center bg-slate-55 relative select-none">
             <h3 className="font-outfit font-extrabold text-base text-slate-400">Uluslararası Balkan Üniversitesi</h3>
-            <p className="text-[11px] text-slate-350 mt-1 max-w-sm leading-relaxed">
+            <p className="text-[11px] text-slate-350 mt-1 max-w-sm leading-relaxed font-medium">
               Widget Canlı Önizlemesi. İkon butonuna tıklayarak yeni özellikleri test edebilirsiniz.
             </p>
 
@@ -484,14 +539,15 @@ export default function WidgetPage() {
                   bottom: '32px',
                   right: position === 'bottom-right' ? '92px' : 'auto',
                   left: position === 'bottom-left' ? '92px' : 'auto',
-                  fontSize: '11px',
-                  lineHeight: '1.35',
+                  fontSize: '11.5px',
+                  lineHeight: '1.4',
                   color: '#334155',
                   fontFamily: 'inherit',
                   textAlign: 'left',
+                  boxShadow: '0 6px 20px rgba(30, 41, 59, 0.1)'
                 }}
               >
-                <div className="flex-1 font-semibold">
+                <div className="flex-1 font-semibold text-slate-650">
                   {simLang === 'tr' ? tooltipTr : tooltipEn}
                 </div>
                 <div className="text-[10px] text-slate-350 cursor-pointer font-bold hover:text-slate-500">&times;</div>
@@ -511,7 +567,7 @@ export default function WidgetPage() {
             )}
 
             {/* Simulated Live Widget elements inline absolute inside the page */}
-            {/* SO Sohbet FAB Button with local icon */}
+            {/* SO Chat FAB Button with local icon */}
             <button
               onClick={() => setWidgetOpen(!widgetOpen)}
               className="absolute z-40 transition-transform active:scale-95 shadow-xl hover:scale-105 border-0 cursor-pointer flex items-center justify-center overflow-hidden"
@@ -522,13 +578,13 @@ export default function WidgetPage() {
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                backgroundColor: primaryColor,
+                background: `linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%)`,
               }}
             >
               <img src="/logoicon.ico" alt="Logo" className="w-7 h-7 object-contain" />
             </button>
 
-            {/* SO Sohbet Penceresi */}
+            {/* SO Chat Window */}
             {widgetOpen && (
               <div
                 className="absolute z-50 bg-white shadow-2xl flex flex-col border border-slate-100 text-left transition-all duration-300 ease-out select-text"
@@ -538,19 +594,29 @@ export default function WidgetPage() {
                   left: position === 'bottom-left' ? '24px' : 'auto',
                   width: '320px',
                   height: '420px',
-                  borderRadius: '12px',
+                  borderRadius: '16px',
                   overflow: 'hidden',
+                  fontFamily: 'inherit'
                 }}
               >
-                {/* Header with logoicon.ico */}
-                <div className="p-4 text-white flex items-center justify-between shadow-md" style={{ backgroundColor: primaryColor }}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center overflow-hidden">
+                {/* Header with gradient and logoicon.ico */}
+                <div 
+                  className="p-4 text-white flex items-center justify-between shadow-md"
+                  style={{
+                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -25)} 100%)`,
+                    borderBottom: `2px solid ${accentColor}`
+                  }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-white/25 flex items-center justify-center overflow-hidden border border-white/10">
                       <img src="/logoicon.ico" alt="IBU" className="w-6 h-6 object-contain" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold">{botName}</h4>
-                      <p className="text-[8px] text-white/80 font-medium">Aktif asistan &bull; Çevrimiçi</p>
+                      <h4 className="text-[13px] font-extrabold tracking-tight font-outfit">{botName}</h4>
+                      <p className="text-[8px] text-white/80 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block animate-pulse"></span>
+                        Aktif asistan &bull; Çevrimiçi
+                      </p>
                     </div>
                   </div>
                   
@@ -572,38 +638,61 @@ export default function WidgetPage() {
                 </div>
 
                 {/* Simulated Messages list */}
-                <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50 text-[11px]">
+                <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50 text-[11px] scrollbar-thin">
                   {messages.map((m, idx) => (
-                    <div key={idx} className={`flex gap-2 items-start ${m.sender === 'user' ? 'flex-row-reverse' : ''}`}>
-                      {m.sender === 'bot' ? (
-                        <div className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          <img src="/logoicon.ico" alt="Bot" className="w-3.5 h-3.5 object-contain" />
+                    <div key={idx} className="space-y-2">
+                      <div className={`flex gap-2 items-start ${m.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                        {m.sender === 'bot' ? (
+                          <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+                            <img src="/logoicon.ico" alt="Bot" className="w-4 h-4 object-contain" />
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-slate-350 text-slate-800 flex items-center justify-center font-extrabold text-[9px] flex-shrink-0 shadow-sm">
+                            U
+                          </div>
+                        )}
+                        <div
+                          className={`p-2.5 rounded-2xl max-w-[80%] leading-relaxed ${
+                            m.sender === 'user' 
+                              ? 'text-white rounded-tr-none shadow-sm' 
+                              : 'bg-white text-slate-700 shadow-sm rounded-tl-none border border-slate-100'
+                          }`}
+                          style={{
+                            background: m.sender === 'user' ? `linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -12)} 100%)` : ''
+                          }}
+                        >
+                          {m.text}
                         </div>
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-slate-300 text-slate-800 flex items-center justify-center font-bold text-[8px] flex-shrink-0">
-                          U
+                      </div>
+                      
+                      {/* Render simulated suggestions if they exist in the bot message */}
+                      {m.sender === 'bot' && m.suggestions && m.suggestions.length > 0 && (
+                        <div className="pl-8 flex flex-col gap-1.5 mt-1 animate-slideIn">
+                          <span className="text-[9px] font-bold text-slate-400">
+                            {simLang === 'tr' ? 'Bununla ilgili şunları da sorabilirsiniz:' : 'Related questions you can ask:'}
+                          </span>
+                          {m.suggestions.map((s, sIdx) => (
+                            <button
+                              key={sIdx}
+                              onClick={() => handleSimQuickReply(s.replace(/^[^\s]+\s/, ''))}
+                              className="text-left px-2.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-[#1a3a6b] font-semibold rounded-lg text-[9px] w-fit max-w-full transition duration-150 active:scale-95 shadow-sm cursor-pointer"
+                              style={{ color: primaryColor }}
+                            >
+                              {s} &rarr;
+                            </button>
+                          ))}
                         </div>
                       )}
-                      <div
-                        className={`p-2.5 rounded-xl max-w-[80%] leading-relaxed ${
-                          m.sender === 'user' 
-                            ? 'text-white rounded-tr-none' 
-                            : 'bg-white text-slate-700 shadow-sm rounded-tl-none border border-slate-100'
-                        }`}
-                        style={{ backgroundColor: m.sender === 'user' ? primaryColor : '' }}
-                      >
-                        {m.text}
-                      </div>
                     </div>
                   ))}
 
                   {/* Typing animation bubble */}
                   {typing && (
                     <div className="flex gap-2 items-start">
-                      <div className="w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        <img src="/logoicon.ico" alt="Bot" className="w-3.5 h-3.5 object-contain" />
+                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+                        <img src="/logoicon.ico" alt="Bot" className="w-4 h-4 object-contain" />
                       </div>
-                      <div className="bg-white border border-slate-100 p-2.5 rounded-xl rounded-tl-none flex gap-1 items-center">
+                      <div className="bg-white border border-slate-100 p-2.5 rounded-xl rounded-tl-none flex gap-1 items-center shadow-sm">
                         <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
                         <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-100"></div>
                         <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-200"></div>
@@ -619,7 +708,7 @@ export default function WidgetPage() {
                       <button
                         key={i}
                         onClick={() => handleSimQuickReply(reply)}
-                        className="px-2 py-1 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-[9px] font-bold border border-slate-200 cursor-pointer transition active:scale-95"
+                        className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-600 rounded-lg text-[9.5px] font-bold border border-slate-200 cursor-pointer transition active:scale-95 shadow-sm"
                       >
                         {reply}
                       </button>

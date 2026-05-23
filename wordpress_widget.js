@@ -40,6 +40,41 @@
   // Dynamic asset loading
   const logoUrl = IBU_CONFIG.apiUrl.replace('/api/chat', '/logoicon.ico');
 
+  // Load Premium Typography from Google Fonts
+  const fontLink = document.createElement('link');
+  fontLink.rel = 'stylesheet';
+  fontLink.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap';
+  document.head.appendChild(fontLink);
+
+  /* ---------- Yardımcı: Renk Parlaklığı (Gradient için) ---------- */
+  function adjustBrightness(hex, percent) {
+    let hexClean = hex.replace('#', '');
+    if (hexClean.length === 3) {
+      hexClean = hexClean[0] + hexClean[0] + hexClean[1] + hexClean[1] + hexClean[2] + hexClean[2];
+    }
+    let R = parseInt(hexClean.substring(0, 2), 16);
+    let G = parseInt(hexClean.substring(2, 4), 16);
+    let B = parseInt(hexClean.substring(4, 6), 16);
+
+    R = parseInt(R * (100 + percent) / 100);
+    G = parseInt(G * (100 + percent) / 100);
+    B = parseInt(B * (100 + percent) / 100);
+
+    R = (R < 255) ? R : 255;
+    G = (G < 255) ? G : 255;
+    B = (B < 255) ? B : 255;
+
+    R = (R > 0) ? R : 0;
+    G = (G > 0) ? G : 0;
+    B = (B > 0) ? B : 0;
+
+    const rHex = R.toString(16).padStart(2, '0');
+    const gHex = G.toString(16).padStart(2, '0');
+    const bHex = B.toString(16).padStart(2, '0');
+
+    return `#${rHex}${gHex}${bHex}`;
+  }
+
   /* ---------- Yardımcı: Dil tespiti ---------- */
   function detectLang(text) {
     return /[çğıöşüÇĞİÖŞÜ]|\b(ne|nasıl|hangi|kayıt|burs|üniversite)\b/i.test(text) ? 'tr' : 'en';
@@ -58,13 +93,13 @@
     #ibu-chat-fab {
       position: fixed; bottom: 24px; right: 24px; z-index: 99998;
       width: 58px; height: 58px; border-radius: 50%;
-      background: ${primaryColor};
+      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -15)} 100%);
       border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-      transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
     }
-    #ibu-chat-fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+    #ibu-chat-fab:hover { transform: scale(1.08) rotate(3deg); box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
     #ibu-chat-fab img { width: 28px; height: 28px; object-fit: contain; }
     #ibu-chat-fab .ibu-badge {
       position: absolute; top: -3px; right: -3px;
@@ -76,13 +111,13 @@
     #ibu-chat-tooltip {
       position: fixed; bottom: 32px; right: 96px; z-index: 99997;
       background: white; border: 1px solid #e2e8f0;
-      border-radius: 12px; padding: 10px 14px; max-width: 240px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 12.5px; color: #334155; line-height: 1.4;
+      border-radius: 12px; padding: 12px 14px; max-width: 230px;
+      box-shadow: 0 6px 24px rgba(30, 41, 59, 0.12);
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 12.5px; color: #334155; line-height: 1.45;
       display: flex; gap: 8px; align-items: flex-start;
       opacity: 0; transform: translateX(10px); pointer-events: none;
-      transition: opacity .3s, transform .3s;
+      transition: opacity .35s, transform .35s cubic-bezier(.34,1.56,.64,1);
     }
     #ibu-chat-tooltip.ibu-show {
       opacity: 1; transform: translateX(0); pointer-events: all;
@@ -102,15 +137,16 @@
 
     #ibu-chat-window {
       position: fixed; bottom: 92px; right: 24px; z-index: 99999;
-      width: 360px; height: 520px;
-      background: #fff; border-radius: 18px;
+      width: 360px; height: 530px;
+      background: #fff; border-radius: 20px;
       display: flex; flex-direction: column;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      box-shadow: 0 12px 48px rgba(30, 41, 59, 0.18);
+      border: 1px solid rgba(0,0,0,0.04);
       transform: scale(0.8) translateY(20px);
       transform-origin: bottom right;
       opacity: 0; pointer-events: none;
-      transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .2s;
+      font-family: 'Inter', -apple-system, sans-serif;
       overflow: hidden;
     }
     #ibu-chat-window.ibu-open {
@@ -119,90 +155,104 @@
     }
 
     .ibu-header {
-      background: ${primaryColor};
-      padding: 14px 16px;
-      display: flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -25)} 100%);
+      border-bottom: 2.5px solid ${accentColor};
+      padding: 16px;
+      display: flex; align-items: center; gap: 12px;
       flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     .ibu-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
+      width: 40px; height: 40px; border-radius: 50%;
       background: rgba(255,255,255,0.18);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.12);
     }
-    .ibu-avatar img { width: 24px; height: 24px; object-fit: contain; }
+    .ibu-avatar img { width: 26px; height: 26px; object-fit: contain; }
     .ibu-header-info { flex: 1; }
-    .ibu-header-name { color: #fff; font-size: 14px; font-weight: 600; margin: 0; }
+    .ibu-header-name {
+      color: #fff; font-family: 'Outfit', sans-serif;
+      font-size: 15px; font-weight: 700; margin: 0;
+      letter-spacing: -0.01em;
+    }
     .ibu-header-status {
-      color: rgba(255,255,255,0.75); font-size: 11px; margin: 2px 0 0;
+      color: rgba(255,255,255,0.8); font-size: 11px; margin: 3px 0 0;
       display: flex; align-items: center; gap: 5px;
     }
     .ibu-status-dot {
-      width: 6px; height: 6px; background: #4ade80;
+      width: 6px; height: 6px; background: #22c55e;
       border-radius: 50%; display: inline-block;
       animation: ibu-pulse 2s infinite;
     }
     @keyframes ibu-pulse {
-      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+      0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.5; }
     }
     .ibu-close-btn {
-      background: rgba(255,255,255,0.15); border: none; border-radius: 8px;
-      width: 30px; height: 30px; cursor: pointer;
+      background: rgba(255,255,255,0.14); border: none; border-radius: 8px;
+      width: 32px; height: 32px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       color: white; font-size: 18px; line-height: 1;
-      transition: background .15s;
+      transition: background .15s, transform .15s;
     }
-    .ibu-close-btn:hover { background: rgba(255,255,255,0.25); }
+    .ibu-close-btn:hover { background: rgba(255,255,255,0.22); transform: scale(1.05); }
 
     .ibu-messages {
-      flex: 1; overflow-y: auto; padding: 14px 12px;
-      display: flex; flex-direction: column; gap: 12px;
+      flex: 1; overflow-y: auto; padding: 16px 14px;
+      display: flex; flex-direction: column; gap: 14px;
+      background: #f8fafc;
       scroll-behavior: smooth;
     }
     .ibu-messages::-webkit-scrollbar { width: 4px; }
     .ibu-messages::-webkit-scrollbar-track { background: transparent; }
-    .ibu-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+    .ibu-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
-    .ibu-msg { display: flex; gap: 8px; max-width: 86%; align-items: flex-start; }
+    .ibu-msg { display: flex; gap: 10px; max-width: 86%; align-items: flex-start; }
     .ibu-msg.ibu-bot { align-self: flex-start; }
     .ibu-msg.ibu-user { align-self: flex-end; flex-direction: row-reverse; }
 
     .ibu-msg-avatar {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: #f1f5f9; border: 1px solid #e2e8f0;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: #ffffff; border: 1.5px solid #e2e8f0;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     .ibu-msg-avatar img { width: 18px; height: 18px; object-fit: contain; }
 
     .ibu-bubble-wrapper { display: flex; flex-direction: column; flex: 1; }
 
     .ibu-bubble {
-      padding: 9px 13px; border-radius: 14px;
+      padding: 10px 14px; border-radius: 16px;
       font-size: 13.5px; line-height: 1.55;
       word-break: break-word;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
     .ibu-bot .ibu-bubble {
-      background: #f1f5f9; color: #1e293b;
+      background: #ffffff; color: #1e293b;
+      border: 1px solid #e2e8f0;
       border-top-left-radius: 3px;
     }
     .ibu-user .ibu-bubble {
-      background: ${primaryColor}; color: #fff;
+      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -12)} 100%);
+      color: #fff;
       border-top-right-radius: 3px;
+      box-shadow: 0 3px 10px ${primaryColor}22;
     }
     .ibu-time {
       font-size: 10px; color: #94a3b8;
-      margin-top: 4px; padding: 0 2px;
+      margin-top: 5px; padding: 0 3px;
     }
     .ibu-user .ibu-time { text-align: right; }
 
     .ibu-typing-bubble {
-      display: flex; gap: 5px; align-items: center; padding: 12px 14px;
-      background: #f1f5f9; border-radius: 14px; border-top-left-radius: 3px;
-      max-width: 60px;
+      display: flex; gap: 5px; align-items: center; padding: 12px 16px;
+      background: #ffffff; border-radius: 16px; border-top-left-radius: 3px;
+      border: 1px solid #e2e8f0;
+      max-width: 65px;
     }
     .ibu-typing-bubble span {
-      width: 7px; height: 7px; background: #94a3b8;
+      width: 7px; height: 7px; background: #cbd5e1;
       border-radius: 50%; animation: ibu-bounce 1.3s infinite;
     }
     .ibu-typing-bubble span:nth-child(2) { animation-delay: .2s; }
@@ -212,52 +262,97 @@
       30% { transform: translateY(-6px); }
     }
 
+    /* Suggestions options buttons container */
+    .ibu-suggestions-container {
+      display: flex; flex-direction: column; gap: 6px;
+      margin-top: 8px; padding-left: 40px;
+      animation: ibu-slide-in .3s ease-out;
+    }
+    .ibu-suggestions-label {
+      font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 2px;
+    }
+    .ibu-suggestion-btn {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+      width: fit-content;
+      max-width: 100%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .ibu-suggestion-btn:hover {
+      background: ${primaryColor}0a;
+      border-color: ${primaryColor}55;
+      color: ${primaryColor};
+      transform: translateX(4px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+    }
+
     .ibu-quick-replies {
-      padding: 4px 12px 8px;
+      padding: 8px 14px 10px;
       display: flex; flex-wrap: wrap; gap: 6px;
+      background: #f8fafc;
+      border-top: 1px solid rgba(0,0,0,0.02);
     }
     .ibu-qr {
-      background: none; border: 1px solid ${primaryColor};
-      color: ${primaryColor}; border-radius: 16px;
-      padding: 5px 11px; font-size: 11.5px; cursor: pointer;
-      transition: background .15s, color .15s; white-space: nowrap;
+      background: #ffffff; border: 1.5px solid ${primaryColor}33;
+      color: ${primaryColor}; border-radius: 18px;
+      padding: 6px 13px; font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all .2s; white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
-    .ibu-qr:hover { background: ${primaryColor}; color: white; }
+    .ibu-qr:hover { background: ${primaryColor}; color: white; border-color: ${primaryColor}; transform: translateY(-1px); }
 
     .ibu-input-row {
-      padding: 10px 12px 12px;
+      padding: 12px 14px 14px;
       border-top: 1px solid #e2e8f0;
       display: flex; gap: 8px; align-items: flex-end;
       background: #fff; flex-shrink: 0;
     }
     .ibu-input {
-      flex: 1; border: 1.5px solid #e2e8f0; border-radius: 20px;
-      padding: 9px 14px; font-size: 13.5px;
+      flex: 1; border: 1.5px solid #e2e8f0; border-radius: 22px;
+      padding: 9px 15px; font-size: 13.5px;
       background: #f8fafc; color: #1e293b;
-      outline: none; resize: none; max-height: 90px; min-height: 38px;
+      outline: none; resize: none; max-height: 90px; min-height: 40px;
       line-height: 1.4; font-family: inherit;
-      transition: border-color .15s;
+      transition: all .15s;
       overflow-y: auto;
     }
-    .ibu-input:focus { border-color: ${primaryColor}; background: #fff; }
+    .ibu-input:focus { border-color: ${primaryColor}; background: #fff; box-shadow: 0 0 0 3px ${primaryColor}1a; }
     .ibu-input::placeholder { color: #94a3b8; }
     .ibu-send {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: ${primaryColor}; border: none; cursor: pointer;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, ${primaryColor} 0%, ${adjustBrightness(primaryColor, -12)} 100%);
+      border: none; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; transition: opacity .15s, transform .15s;
+      box-shadow: 0 3px 8px ${primaryColor}25;
     }
-    .ibu-send:hover { opacity: .88; transform: scale(1.05); }
-    .ibu-send:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .ibu-send:hover { opacity: .92; transform: scale(1.05); }
+    .ibu-send:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
     .ibu-send svg { width: 17px; height: 17px; fill: white; }
 
     .ibu-powered {
       text-align: center; font-size: 10px; color: #94a3b8;
       padding: 4px 0 8px; flex-shrink: 0;
+      background: #ffffff;
+      border-top: 1px solid rgba(0,0,0,0.01);
+      font-weight: 500;
+    }
+
+    @keyframes ibu-slide-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @media (max-width: 480px) {
-      #ibu-chat-window { width: calc(100vw - 16px); right: 8px; bottom: 80px; }
+      #ibu-chat-window { width: calc(100vw - 16px); right: 8px; bottom: 80px; height: calc(100vh - 100px); }
       #ibu-chat-fab { right: 16px; bottom: 16px; }
       #ibu-chat-tooltip { right: 84px; bottom: 24px; max-width: 200px; }
     }
@@ -277,7 +372,7 @@
   const tooltip = document.createElement('div');
   tooltip.id = 'ibu-chat-tooltip';
   tooltip.innerHTML = `
-    <div style="flex: 1; font-weight: 500;">
+    <div style="flex: 1; font-weight: 600;">
       ${currentLang === 'tr' ? IBU_CONFIG.tooltipTr : IBU_CONFIG.tooltipEn}
     </div>
     <button class="ibu-tooltip-close" aria-label="Kapat">✕</button>
@@ -333,6 +428,33 @@
 
   function scrollDown() {
     setTimeout(() => { messagesEl.scrollTop = messagesEl.scrollHeight; }, 50);
+  }
+
+  function renderSuggestions(botDiv, list) {
+    if (botDiv.querySelector('.ibu-suggestions-container')) return;
+
+    const container = document.createElement('div');
+    container.className = 'ibu-suggestions-container';
+
+    const label = document.createElement('div');
+    label.className = 'ibu-suggestions-label';
+    label.textContent = currentLang === 'tr' ? 'Bununla ilgili şunları da sorabilirsiniz:' : 'Related questions you can ask:';
+    container.appendChild(label);
+
+    list.forEach(q => {
+      const btn = document.createElement('button');
+      btn.className = 'ibu-suggestion-btn';
+      btn.textContent = q;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        container.remove();
+        sendMessage(q);
+      };
+      container.appendChild(btn);
+    });
+
+    botDiv.appendChild(container);
+    scrollDown();
   }
 
   function addMessage(text, role) {
@@ -407,6 +529,9 @@
     addMessage(text, 'user');
     qrEl.innerHTML = '';
 
+    // Clear previous suggestion bubbles to prevent screen clutter
+    document.querySelectorAll('.ibu-suggestions-container').forEach(c => c.remove());
+
     // Dil algıla ve placeholder/quick replies güncelle
     const detected = detectLang(text);
     if (detected !== currentLang) {
@@ -473,6 +598,9 @@
             }
             if (data.done) {
               currentLang = data.lang || currentLang;
+              if (data.suggestions && data.suggestions.length > 0) {
+                renderSuggestions(botDiv, data.suggestions);
+              }
             }
           } catch {}
         }

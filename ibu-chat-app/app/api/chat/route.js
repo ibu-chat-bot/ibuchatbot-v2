@@ -172,8 +172,13 @@ export async function POST(req) {
           }
         }
 
+        const suggestions = finalDocs
+          .slice(1, 4)
+          .map(d => d.question)
+          .filter(q => q && q.trim().toLowerCase() !== message.trim().toLowerCase())
+
         // Send completion event
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, lang })}\n\n`))
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, lang, suggestions })}\n\n`))
         controller.close()
 
         // Background log saving
