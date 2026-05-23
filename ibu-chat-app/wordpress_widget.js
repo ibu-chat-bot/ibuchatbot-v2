@@ -15,6 +15,9 @@
     placeholderEn: 'Ask me anything...',
     quickRepliesTr: ['Kayıt tarihleri', 'Burs imkânları', 'Programlar', 'Yurt & konaklama'],
     quickRepliesEn: ['Enrollment dates', 'Scholarships', 'Programs', 'Dormitory'],
+    whatsappNumber: '905050345791',   // başında + olmadan
+    whatsappThreshold: 0.70,          // bu skorun altında WA butonu göster
+    showWhatsappAlways: false,         // true yapılırsa her cevabın altında göster
   };
 
   const THEMES = {
@@ -97,6 +100,56 @@
     });
     wrapper.appendChild(lst);
     return wrapper;
+  }
+
+  // ── WhatsApp Entegrasyonu Yardımcıları ──
+  function buildWhatsAppLink(conversationHistory, lastQuestion) {
+    const number = IBU_CONFIG.whatsappNumber;
+    const recentMessages = conversationHistory
+      .slice(-6)
+      .map(m => `${m.role === 'user' ? '👤' : '🤖'} ${m.content}`)
+      .join('\n');
+    const message = `Merhaba! IBU web sitesi chatbotundan geliyorum.
+
+❓ Sorum: ${lastQuestion}
+
+📋 Konuşma geçmişim:
+${recentMessages}
+
+Yardımcı olabilir misiniz?`;
+    return `https://api.whatsapp.com/send?phone=${number}&text=${encodeURIComponent(message)}`;
+  }
+
+  function createWhatsAppButton(question) {
+    const link = buildWhatsAppLink(hist, question);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ibu-wa-wrapper';
+    wrapper.innerHTML = `
+    <p class="ibu-wa-text">
+      ${lang === 'tr' ? 'Bu konuda size daha iyi yardımcı olabilmek için WhatsApp destek hattımıza bağlanabilirsiniz.' : 'To help you better on this topic, you can connect to our WhatsApp support line.'}
+    </p>
+    <a href="${link}" target="_blank" rel="noopener" class="ibu-wa-btn">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="margin-right:6px;vertical-align:middle;display:inline-block;">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.561 4.14 1.543 5.876L0 24l6.29-1.542A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.894a9.877 9.877 0 01-5.031-1.378l-.361-.214-3.735.916.959-3.624-.235-.373A9.876 9.876 0 012.106 12C2.106 6.58 6.58 2.106 12 2.106c5.421 0 9.894 4.474 9.894 9.894 0 5.421-4.473 9.894-9.894 9.894z"/>
+      </svg>
+      <span>${lang === 'tr' ? "WhatsApp'ta Devam Et" : 'Continue on WhatsApp'}</span>
+    </a>
+  `;
+    return wrapper;
+  }
+
+  // Mesai saatleri tespiti
+  function isOutsideBusinessHours() {
+    const now = new Date();
+    const macedoniaOffset = 2; // Central European Time zone
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const macedoniaTime = new Date(utc + 3600000 * macedoniaOffset);
+    const hour = macedoniaTime.getHours();
+    const day = macedoniaTime.getDay();
+    const isWeekend = day === 0 || day === 6;
+    const isNight = hour < 9 || hour >= 18;
+    return isWeekend || isNight;
   }
 
   const [r, g, b] = hexRgb(pc);
@@ -325,10 +378,44 @@
 .ibu-sug-btn:hover svg{
   transform:translateX(2px);color:${pc};
 }
-/* ── Değişiklik 4: Ek CSS ── */
 .ibu-bub ul{margin:6px 0 6px 16px;padding:0;}
 .ibu-bub li{margin-bottom:4px;line-height:1.5;}
 .ibu-bub strong{font-weight:600;}
+
+/* ── WHATSAPP REDIRECT STYLE ── */
+.ibu-wa-wrapper {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  max-width: 84%;
+  align-self: flex-start;
+  font-family:'DM Sans',sans-serif;
+  animation:ibu-slide .28s ease;
+}
+.ibu-wa-text {
+  font-size: 12px;
+  color: #166534;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+.ibu-wa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #25d366;
+  color: white !important;
+  text-decoration: none;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.ibu-wa-btn:hover {
+  background: #1fba57;
+}
 
 /* ── QUICK REPLIES ── */
 .ibu-qr-bar{
@@ -599,9 +686,27 @@
               const { mainText, suggestions: inlineSuggs } = extractSuggestions(full);
               bub.innerHTML = renderMarkdown(mainText);
               const finalSuggs = d.suggestions?.length ? d.suggestions : inlineSuggs;
+              let addedEl = null;
               if (finalSuggs.length) {
                 const sugEl = createSuggestionButtons(finalSuggs, (q) => { send(q); });
-                if (sugEl) botGroup.insertAdjacentElement('afterend', sugEl);
+                if (sugEl) {
+                  botGroup.insertAdjacentElement('afterend', sugEl);
+                  addedEl = sugEl;
+                }
+              }
+              // ── WhatsApp Entegrasyonu Eşleşme Skoru Kontrolü ──
+              const similarity = d.similarity || 0;
+              const hasContext = d.hasContext !== false;
+              if (
+                !hasContext ||
+                similarity < IBU_CONFIG.whatsappThreshold ||
+                IBU_CONFIG.showWhatsappAlways
+              ) {
+                const waBtn = createWhatsAppButton(text);
+                if (waBtn) {
+                  const targetAnchor = addedEl || botGroup;
+                  targetAnchor.insertAdjacentElement('afterend', waBtn);
+                }
               }
               scroll();
             }
@@ -626,6 +731,12 @@
     tip.classList.remove('show');
     if (open && msgsEl.children.length === 0) {
       addMsg(IBU_CONFIG.welcomeTr, 'bot');
+      if (isOutsideBusinessHours()) {
+        addMsg(lang === 'tr' 
+          ? 'Şu an mesai saatlerimiz dışındayız (Hafta içi 09:00–18:00). Sorularınızı yanıtlamaya devam ediyorum, acil konular için WhatsApp destek hattımız aktiftir.'
+          : 'We are currently outside our business hours (Weekdays 09:00–18:00). I continue to answer your questions, but for urgent matters, our WhatsApp support line is active.', 
+          'bot');
+      }
       setQR('tr');
       setTimeout(() => inpEl.focus(), 350);
     }

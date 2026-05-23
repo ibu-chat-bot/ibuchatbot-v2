@@ -329,8 +329,16 @@ export async function POST(req) {
           .map(d => d.question)
           .filter(q => q && q.trim().toLowerCase() !== message.trim().toLowerCase())
 
+        const topSimilarity = finalDocs[0]?.similarity || 0;
+
         // Send completion event
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, lang, suggestions })}\n\n`))
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+          done: true, 
+          lang, 
+          suggestions,
+          similarity: topSimilarity,
+          hasContext: finalDocs.length > 0
+        })}\n\n`))
         controller.close()
 
         // Background log saving
