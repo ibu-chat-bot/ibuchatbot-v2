@@ -50,13 +50,12 @@ export async function POST(req) {
 
     code = code.replace(/const\s+IBU_CONFIG\s*=\s*\{[\s\S]*?\};/, newConfigBlock)
 
-    // Handle position
+    // Handle position dynamically
     if (position === 'bottom-left') {
-      code = code.replace(/bottom: 24px;\s*right: 24px;/g, 'bottom: 24px; left: 24px;')
-      code = code.replace(/bottom: 92px;\s*right: 24px;/g, 'bottom: 92px; left: 24px;')
-      code = code.replace(/bottom: 32px;\s*right: 96px;/g, 'bottom: 32px; left: 96px;')
-      code = code.replace(/right: -6px;/g, 'left: -6px; border-top: none; border-right: none; border-bottom: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0;')
-      code = code.replace(/transform-origin: bottom right;/g, 'transform-origin: bottom left;')
+      code = code.replace(/bottom:\s*(\d+)px;\s*right:\s*(\d+)px;/g, 'bottom: $1px; left: $2px;')
+      code = code.replace(/right:\s*(\d+)px;/g, 'left: $1px;')
+      code = code.replace(/right:\s*-\s*(\d+)px;/g, 'left: -$1px;')
+      code = code.replace(/transform-origin:\s*bottom\s+right;/g, 'transform-origin: bottom left;')
     }
 
     // Minify
