@@ -32,18 +32,22 @@ export async function verifyToken(token) {
  */
 export async function verifyPassword(password) {
   const hash = process.env.ADMIN_PASSWORD_HASH
+  console.log(`[DEBUG AUTH] Input Password length: ${password?.length}, Env Hash exists: ${!!hash}, Length: ${hash?.length}`)
   
   // 1. Try to verify using the environment hash if it is correctly loaded
   if (hash && hash.length === 60) {
     try {
       const match = await bcrypt.compare(password, hash)
+      console.log(`[DEBUG AUTH] Env hash match result: ${match}`)
       if (match) return true
     } catch (e) {
-      console.warn("Bcrypt env comparison error, falling back...")
+      console.warn("[DEBUG AUTH] Bcrypt env comparison error, falling back...", e)
     }
   }
   
   // 2. Dual-layer fallback: Standard bcrypt hash for 'admin123' to prevent Next.js/dotenv expansion bugs
   const fallbackHash = '$2b$10$bNrkvLDrVEFGppO6XTuNwOKmpQcv.hz5ZTnkhmqv2LaPJWceaVQpG'
-  return await bcrypt.compare(password, fallbackHash)
+  const matchFallback = await bcrypt.compare(password, fallbackHash)
+  console.log(`[DEBUG AUTH] Fallback hash match result: ${matchFallback}`)
+  return matchFallback
 }
