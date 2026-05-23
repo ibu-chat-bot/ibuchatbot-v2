@@ -62,8 +62,23 @@ function buildSystemPrompt(lang, contextDocs, customPrompt) {
 export async function POST(req) {
   // CORS headers
   const origin = req.headers.get('origin') || ''
-  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',')
-  const corsOrigin = allowed.includes(origin) ? origin : allowed[0]
+  const allowed = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(o => o.trim().replace(/\/$/, '').toLowerCase())
+  
+  const normalizedOrigin = origin.trim().replace(/\/$/, '').toLowerCase()
+  
+  let corsOrigin = allowed[0] || '*'
+  
+  // Proactive safety check: If origin matches allowed list, OR belongs to balkan.edu.tr, vercel.app, or localhost
+  if (
+    allowed.includes(normalizedOrigin) ||
+    normalizedOrigin.includes('balkan.edu.tr') ||
+    normalizedOrigin.includes('vercel.app') ||
+    normalizedOrigin.includes('localhost')
+  ) {
+    corsOrigin = origin
+  }
 
   const headers = {
     'Access-Control-Allow-Origin': corsOrigin,
