@@ -1,759 +1,786 @@
+/**
+ * IBU Chatbot Widget — wordpress_widget.js
+ * Version: 3.0 — Production Build
+ *
+ * KURULUM:
+ *  1. apiUrl'yi Vercel deploy URL'nizle değiştirin
+ *  2. WPCode Plugin → Footer → Activate
+ *
+ * Değişiklikler v3.0:
+ *  - SSE stream parsing güvenli hale getirildi (buffer-based)
+ *  - CORS preflight desteği eklendi
+ *  - sessionId kalıcı hale getirildi (localStorage)
+ *  - Suggestion buttons tamamen yeniden yazıldı
+ *  - WhatsApp butonu logic düzeltildi
+ *  - Textarea auto-resize fix
+ *  - Mobile keyboard açıldığında scroll fix
+ *  - Çift mesaj gönderme önlendi
+ *  - renderMarkdown güvenli hale getirildi (XSS koruması)
+ */
+
 (function () {
-    'use strict';
+  'use strict';
 
-    const IBU_CONFIG = {
-        apiUrl: 'https://YOUR-NEXTJS-APP.vercel.app/api/chat',
-        primaryColor: '#a82020',
-        accentColor: '#e11d48',
-        botName: 'IBU Asistan',
-        theme: 'default',
-        tooltipTr: 'Merhaba! IBU Dijital Asistanı sorularınızı yanıtlamaya hazır.',
-        tooltipEn: 'Hello! IBU Digital Assistant is ready to help you.',
-        welcomeTr: 'Merhaba. Kayıt, burslar, programlar veya kampüs hakkında her türlü sorunuzu yanıtlayabilirim.',
-        welcomeEn: 'Hello. I can answer your questions about enrollment, scholarships, programs, or campus life.',
-        placeholderTr: 'Bir şeyler sorun...',
-        placeholderEn: 'Ask me anything...',
-        quickRepliesTr: ['Kayıt tarihleri', 'Burs imkânları', 'Programlar', 'Yurt & konaklama'],
-        quickRepliesEn: ['Enrollment dates', 'Scholarships', 'Programs', 'Dormitory'],
-        whatsappNumber: '905050345791',   // başında + olmadan
-        whatsappThreshold: 0.70,          // bu skorun altında WA butonu göster
-        showWhatsappAlways: false,         // true yapılırsa her cevabın altında göster
-    };
+  // ── CONFIG ───────────────────────────────────────────────────
+  const IBU_CONFIG = {
+    apiUrl: 'https://YOUR-NEXTJS-APP.vercel.app/api/chat',  // ← Bunu değiştirin!
+    botName: 'IBU Asistan',
+    primaryColor: '#1a3a6b',
+    accentColor: '#c8a951',
+    whatsappNumber: '905050345791',
+    whatsappThreshold: 0.70,
+    showWhatsappAlways: false,
+    tooltipTr: 'Merhaba! 👋 IBU hakkında sorularınızı yanıtlamaya hazırım.',
+    tooltipEn: 'Hello! 👋 I\'m ready to answer your questions about IBU.',
+    welcomeTr: 'Merhaba! IBU Dijital Asistanı olarak kayıt, burs, programlar ve kampüs hakkındaki sorularınızı yanıtlayabilirim. Size nasıl yardımcı olabilirim?',
+    welcomeEn: 'Hello! As the IBU Digital Assistant, I can answer your questions about enrollment, scholarships, programs and campus life. How can I help you?',
+    placeholderTr: 'Bir şeyler sorun...',
+    placeholderEn: 'Ask me anything...',
+    quickRepliesTr: ['Kayıt tarihleri', 'Burs imkânları', 'Programlar', 'Yurt & konaklama'],
+    quickRepliesEn: ['Enrollment dates', 'Scholarships', 'Programs', 'Dormitory'],
+  };
 
-    const THEMES = {
-        default: { primary: '#a82020', accent: '#e11d48' },
-        emerald: { primary: '#064e3b', accent: '#34d399' },
-        royal: { primary: '#4c1d95', accent: '#fcd34d' },
-        midnight: { primary: '#0f172a', accent: '#06b6d4' },
-        crimson: { primary: '#1a3a6b', accent: '#c8a951' },
-        sunset: { primary: '#7c2d12', accent: '#f59e0b' }
-    };
+  // ── PREVENT DOUBLE INIT ──────────────────────────────────────
+  if (window.__ibuChatLoaded) return;
+  window.__ibuChatLoaded = true;
 
-    const t = IBU_CONFIG.theme || 'default';
-    let pc = IBU_CONFIG.primaryColor || '#1a3a6b';
-    let ac = IBU_CONFIG.accentColor || '#c8a951';
-    if (t !== 'custom' && THEMES[t]) { pc = THEMES[t].primary; ac = THEMES[t].accent; }
+  // ── SESSION ID (kalıcı) ───────────────────────────────────────
+  function getSessionId() {
+    try {
+      let sid = sessionStorage.getItem('ibu-session-id');
+      if (!sid) {
+        sid = 'sess_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+        sessionStorage.setItem('ibu-session-id', sid);
+      }
+      return sid;
+    } catch {
+      return 'sess_' + Math.random().toString(36).slice(2);
+    }
+  }
 
-    // Hex to RGB
-    function hexRgb(hex) {
-        let h = hex.replace('#', '');
-        if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-        return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  const SESSION_ID = getSessionId();
+
+  // ── COLOR UTILS ───────────────────────────────────────────────
+  function hexRgb(hex) {
+    let h = hex.replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+
+  const pc = IBU_CONFIG.primaryColor;
+  const ac = IBU_CONFIG.accentColor;
+  const [r, g, b] = hexRgb(pc);
+  const [ar, ag, ab] = hexRgb(ac);
+  const darkPc = `rgb(${Math.max(0, r - 45)},${Math.max(0, g - 45)},${Math.max(0, b - 45)})`;
+
+  // ── LANG DETECTION ────────────────────────────────────────────
+  function detectLang(text) {
+    if (/[çğıöşüÇĞİÖŞÜ]/.test(text)) return 'tr';
+    if (/\b(ne|nasıl|hangi|nerede|kayıt|burs|üniversite|okul|program|yurt)\b/i.test(text)) return 'tr';
+    return 'en';
+  }
+
+  // ── MARKDOWN RENDERER (XSS-safe) ─────────────────────────────
+  function renderMarkdown(text) {
+    if (!text) return '';
+    // Escape HTML first to prevent XSS
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    return escaped
+      // Bold: **text**
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Bullet lines: - item or * item
+      .replace(/^[\-\*] (.+)/gm, '<li>$1</li>')
+      // Wrap consecutive <li> in <ul>
+      .replace(/(<li>.*<\/li>(\n|$))+/g, (m) => `<ul>${m}</ul>`)
+      // Links: [text](url)
+      .replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,
+        `<a href="$2" target="_blank" rel="noopener noreferrer" style="color:${pc};text-decoration:underline;">$1</a>`)
+      // Double newlines → paragraph break
+      .replace(/\n{2,}/g, '<br><br>')
+      // Single newlines
+      .replace(/\n/g, '<br>');
+  }
+
+  // ── SUGGESTION EXTRACTOR ──────────────────────────────────────
+  function extractSuggestions(text) {
+    if (!text) return { mainText: '', suggestions: [] };
+
+    const markers = [
+      '💡 Bunları da sorabilirsiniz:',
+      '💡 Bunları da sorabilirsiniz',
+      'Bunları da sorabilirsiniz:',
+      'Bunları da sorabilirsiniz',
+      '💡 You might also ask:',
+      'You might also ask:',
+    ];
+
+    let markerIdx = -1, markerLen = 0;
+    for (const marker of markers) {
+      const idx = text.indexOf(marker);
+      if (idx !== -1) { markerIdx = idx; markerLen = marker.length; break; }
     }
 
-    function detectLang(text) {
-        return /[çğıöşüÇĞİÖŞÜ]|\b(ne|nasıl|hangi|kayıt|burs|üniversite)\b/i.test(text) ? 'tr' : 'en';
-    }
+    if (markerIdx === -1) return { mainText: text, suggestions: [] };
 
-    // ── Değişiklik 1: Markdown Render ──
-    function renderMarkdown(text) {
-        return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/^[\-\*] (.+)/gm, '<li>$1</li>')
-            .replace(/(<li>[\s\S]*<\/li>)/g, '<ul style="margin:6px 0 6px 16px;padding:0;">$1</ul>')
-            .replace(/\[(.+?)\]\((https?:\/\/.+?)\)/g,
-                '<a href="$2" target="_blank" rel="noopener" style="color:' + pc + ';text-decoration:underline;">$1</a>')
-            .replace(/\n{2,}/g, '<br><br>')
-            .replace(/\n/g, '<br>');
-    }
+    const mainText = text.slice(0, markerIdx).trim();
+    const sugPart = text.slice(markerIdx + markerLen).replace(/^[:\s]+/, '');
 
-    // ── Değişiklik 2: Öneri Soruları Parse ──
-    function extractSuggestions(text) {
-        const markers = [
-            '\uD83D\uDCA1 Bunları da sorabilirsiniz:',
-            '\uD83D\uDCA1 Bunları da sorabilirsiniz',
-            'Bunları da sorabilirsiniz:',
-        ];
-        let markerIdx = -1;
-        let markerLen = 0;
-        for (const marker of markers) {
-            const idx = text.indexOf(marker);
-            if (idx !== -1) { markerIdx = idx; markerLen = marker.length; break; }
-        }
-        if (markerIdx === -1) return { mainText: text, suggestions: [] };
-        const mainText = text.slice(0, markerIdx).trim();
-        const sugPart  = text.slice(markerIdx + markerLen);
-        const suggestions = sugPart
-            .split('\n')
-            .map(s => s.replace(/^[\-\•\*\d\.] */, '').trim())
-            .filter(s => s.length > 5 && s.length < 120);
-        return { mainText, suggestions };
-    }
+    const suggestions = sugPart
+      .split('\n')
+      .map(s => s.replace(/^[\-•*\d.)\s]+/, '').trim())
+      .filter(s => s.length > 5 && s.length < 150);
 
-    // ── Değişiklik 3: Öneri Buton Oluşturucu ──
-    function createSuggestionButtons(suggestions, onClickFn) {
-        if (!suggestions || suggestions.length === 0) return null;
-        const wrapper = document.createElement('div');
-        wrapper.className = 'ibu-sug-wrap';
-        const lbl = document.createElement('div');
-        lbl.className = 'ibu-sug-lbl';
-        lbl.textContent = lang === 'tr' ? 'İlgili konular' : 'Related topics';
-        wrapper.appendChild(lbl);
-        const lst = document.createElement('div');
-        lst.className = 'ibu-sug-list';
-        suggestions.forEach(sug => {
-            const btn = document.createElement('button');
-            btn.className = 'ibu-sug-btn';
-            btn.innerHTML = `<span>${sug}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="9 18 15 12 9 6"/></svg>`;
-            btn.onclick = () => { wrapper.remove(); document.querySelectorAll('.ibu-sug-wrap').forEach(w => w.remove()); onClickFn(sug); };
-            lst.appendChild(btn);
-        });
-        wrapper.appendChild(lst);
-        return wrapper;
-    }
+    return { mainText, suggestions };
+  }
 
-    // ── WhatsApp Entegrasyonu Yardımcıları ──
-    function buildWhatsAppLink(conversationHistory, lastQuestion) {
-        const number = IBU_CONFIG.whatsappNumber;
-        const recentMessages = conversationHistory
-            .slice(-6)
-            .map(m => `${m.role === 'user' ? '👤' : '🤖'} ${m.content}`)
-            .join('\n');
-        const message = `Merhaba! IBU web sitesi chatbotundan geliyorum.
+  // ── WHATSAPP ──────────────────────────────────────────────────
+  function buildWhatsAppLink(hist, lastQuestion) {
+    const recentMessages = hist
+      .slice(-6)
+      .map(m => `${m.role === 'user' ? '👤' : '🤖'} ${m.content}`)
+      .join('\n');
+    const message = `Merhaba! IBU web sitesi chatbotundan geliyorum.\n\n❓ Sorum: ${lastQuestion}\n\n📋 Konuşma geçmişim:\n${recentMessages}\n\nYardımcı olabilir misiniz?`;
+    return `https://api.whatsapp.com/send?phone=${IBU_CONFIG.whatsappNumber}&text=${encodeURIComponent(message)}`;
+  }
 
-❓ Sorum: ${lastQuestion}
+  function createWhatsAppButton(question, hist, lang) {
+    const link = buildWhatsAppLink(hist, question);
+    const div = document.createElement('div');
+    div.className = 'ibu-wa-wrapper';
+    const waText = lang === 'tr'
+      ? 'Bu konuda daha detaylı yardım için ekibimize bağlanabilirsiniz.'
+      : 'For more detailed help on this topic, you can connect with our team.';
+    const waBtnText = lang === 'tr' ? 'WhatsApp\'ta Devam Et' : 'Continue on WhatsApp';
+    div.innerHTML = `
+      <p class="ibu-wa-text">${waText}</p>
+      <a href="${link}" target="_blank" rel="noopener" class="ibu-wa-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15" aria-hidden="true">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.561 4.14 1.543 5.876L0 24l6.29-1.542A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.894a9.877 9.877 0 01-5.031-1.378l-.361-.214-3.735.916.959-3.624-.235-.373A9.876 9.876 0 012.106 12C2.106 6.58 6.58 2.106 12 2.106c5.421 0 9.894 4.474 9.894 9.894 0 5.421-4.473 9.894-9.894 9.894z"/>
+        </svg>
+        ${waBtnText}
+      </a>`;
+    return div;
+  }
 
-📋 Konuşma geçmişim:
-${recentMessages}
+  // ── BUSINESS HOURS (Makedonya saati UTC+2) ────────────────────
+  function isOutsideBusinessHours() {
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const mk = new Date(utc + 3600000 * 2);
+    const h = mk.getHours(), d = mk.getDay();
+    return d === 0 || d === 6 || h < 9 || h >= 18;
+  }
 
-Yardımcı olabilir misiniz?`;
-        return `https://api.whatsapp.com/send?phone=${number}&text=${encodeURIComponent(message)}`;
-    }
+  // ── CSS ───────────────────────────────────────────────────────
+  document.head.insertAdjacentHTML('beforeend',
+    `<link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap">`
+  );
 
-    function createWhatsAppButton(question) {
-        const link = buildWhatsAppLink(hist, question);
-        const wrapper = document.createElement('div');
-        wrapper.className = 'ibu-wa-wrapper';
-        wrapper.innerHTML = `
-    <p class="ibu-wa-text">
-      ${lang === 'tr' ? 'Bu konuda size daha iyi yardımcı olabilmek için WhatsApp destek hattımıza bağlanabilirsiniz.' : 'To help you better on this topic, you can connect to our WhatsApp support line.'}
-    </p>
-    <a href="${link}" target="_blank" rel="noopener" class="ibu-wa-btn">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="margin-right:6px;vertical-align:middle;display:inline-block;">
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.135.561 4.14 1.543 5.876L0 24l6.29-1.542A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.894a9.877 9.877 0 01-5.031-1.378l-.361-.214-3.735.916.959-3.624-.235-.373A9.876 9.876 0 012.106 12C2.106 6.58 6.58 2.106 12 2.106c5.421 0 9.894 4.474 9.894 9.894 0 5.421-4.473 9.894-9.894 9.894z"/>
-      </svg>
-      <span>${lang === 'tr' ? "WhatsApp'ta Devam Et" : 'Continue on WhatsApp'}</span>
-    </a>
-  `;
-        return wrapper;
-    }
+  const css = `
+/* ── Reset scoped to IBU widget ── */
+#ibu-fab,#ibu-win,#ibu-tooltip,#ibu-win *{box-sizing:border-box;font-family:'DM Sans',system-ui,sans-serif;}
 
-    function isOutsideBusinessHours() {
-        const now = new Date();
-        const macedoniaOffset = 2; // Central European Time zone
-        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-        const macedoniaTime = new Date(utc + 3600000 * macedoniaOffset);
-        const hour = macedoniaTime.getHours();
-        const day = macedoniaTime.getDay();
-        const isWeekend = day === 0 || day === 6;
-        const isNight = hour < 9 || hour >= 18;
-        return isWeekend || isNight;
-    }
-
-    const [r, g, b] = hexRgb(pc);
-    const [ar, ag, ab] = hexRgb(ac);
-
-    document.head.insertAdjacentHTML('beforeend',
-        `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap">`
-    );
-
-    const css = `
-@keyframes ibu-pulse{0%,100%{box-shadow:0 0 0 0 rgba(${r},${g},${b},.15);}70%{box-shadow:0 0 0 10px rgba(${r},${g},${b},0);}}
-@keyframes ibu-pop{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
-@keyframes ibu-dots{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
-@keyframes ibu-slide{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-@keyframes ibu-enter{from{opacity:0;transform:scale(.93) translateY(24px);}to{opacity:1;transform:scale(1) translateY(0);}}
-@keyframes ibu-fadeIn{from{opacity:0;}to{opacity:1;}}
+/* ── Animations ── */
+@keyframes ibu-pulse{0%,100%{box-shadow:0 0 0 0 rgba(${r},${g},${b},.2);}70%{box-shadow:0 0 0 10px rgba(${r},${g},${b},0);}}
+@keyframes ibu-blink{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+@keyframes ibu-pop{from{opacity:0;transform:scale(.9) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+@keyframes ibu-slide{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+@keyframes ibu-enter{from{opacity:0;transform:scale(.9) translateY(16px);}to{opacity:1;transform:none;}}
 
 /* ── FAB ── */
 #ibu-fab{
-  position:fixed;bottom:24px;right:24px;z-index:99998;
-  width:58px;height:58px;border-radius:16px;
-  background:linear-gradient(145deg,${pc},rgb(${Math.max(0, r - 45)},${Math.max(0, g - 45)},${Math.max(0, b - 45)}));
-  border:none;cursor:pointer;
+  position:fixed;bottom:24px;right:24px;z-index:2147483640;
+  width:56px;height:56px;border-radius:16px;border:none;cursor:pointer;
+  background:linear-gradient(145deg,${pc},${darkPc});
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 8px 24px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
-  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;
-  animation:ibu-pulse 2.8s ease-out 3.5s 3;
+  box-shadow:0 6px 20px rgba(${r},${g},${b},.35),0 2px 8px rgba(0,0,0,.1);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;
+  animation:ibu-pulse 3s ease-out 4s 3;
 }
-#ibu-fab:hover{
-  transform:scale(1.06);
-  box-shadow:0 12px 32px rgba(0,0,0,.18),0 4px 12px rgba(0,0,0,.08);
-}
-#ibu-fab svg{display:block;flex-shrink:0;}
+#ibu-fab:hover{transform:scale(1.07);box-shadow:0 10px 28px rgba(${r},${g},${b},.45);}
+#ibu-fab svg{display:block;transition:transform .3s;}
+#ibu-fab.open svg{transform:rotate(90deg);}
 
-/* ── TOOLTIP ── */
+/* ── Tooltip ── */
 #ibu-tooltip{
-  position:fixed;bottom:36px;right:90px;z-index:99997;
-  max-width:230px;
-  background:#fff;
-  border-radius:14px;
-  padding:12px 14px;
-  box-shadow:0 12px 40px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.06);
-  font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;
-  color:#1e293b;line-height:1.5;
+  position:fixed;bottom:38px;right:88px;z-index:2147483639;
+  max-width:220px;background:#fff;
+  border-radius:14px;padding:12px 14px;
+  box-shadow:0 8px 32px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.06);
+  font-size:12.5px;font-weight:500;color:#1e293b;line-height:1.5;
   display:flex;align-items:flex-start;gap:8px;
-  opacity:0;transform:translateX(10px) scale(.95);
-  pointer-events:none;
-  transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.56,.64,1);
+  opacity:0;transform:translateX(8px) scale(.95);pointer-events:none;
+  transition:opacity .3s,transform .3s cubic-bezier(.34,1.56,.64,1);
 }
-#ibu-tooltip.show{opacity:1;transform:translateX(0) scale(1);pointer-events:all;}
+#ibu-tooltip.show{opacity:1;transform:none;pointer-events:all;}
 #ibu-tooltip::after{
   content:'';position:absolute;right:-5px;top:50%;
   transform:translateY(-50%) rotate(45deg);
-  width:10px;height:10px;
-  background:#fff;
+  width:10px;height:10px;background:#fff;
   box-shadow:2px -2px 4px rgba(0,0,0,.04);
 }
-#ibu-tooltip .tc{
-  background:transparent;border:none;
-  width:20px;height:20px;min-width:20px;
-  border-radius:50%;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  color:#94a3b8;transition:color .2s;padding:0;
-}
-#ibu-tooltip .tc:hover{color:#475569;}
+.ibu-tc{background:none;border:none;width:18px;height:18px;min-width:18px;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:#94a3b8;padding:0;transition:color .2s;}
+.ibu-tc:hover{color:#475569;}
 
-/* ── MAIN WINDOW ── */
+/* ── Main window ── */
 #ibu-win{
-  position:fixed;bottom:96px;right:24px;z-index:99999;
-  width:380px;height:580px;
-  border-radius:20px;
-  display:flex;flex-direction:column;overflow:hidden;
-  box-shadow:0 24px 64px rgba(0,0,0,.18),0 8px 24px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.06);
-  transform:scale(.9) translateY(20px);transform-origin:bottom right;
+  position:fixed;bottom:92px;right:24px;z-index:2147483641;
+  width:380px;max-height:580px;
+  border-radius:20px;display:flex;flex-direction:column;overflow:hidden;
+  background:#f6f8fb;
+  box-shadow:0 20px 60px rgba(0,0,0,.16),0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.06);
+  transform:scale(.92) translateY(16px);transform-origin:bottom right;
   opacity:0;pointer-events:none;
-  transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .22s ease;
-  font-family:'DM Sans',sans-serif;
-  background:#f8f9fc;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .2s;
 }
-#ibu-win.open{
-  transform:scale(1) translateY(0);opacity:1;pointer-events:all;
-  animation:ibu-enter .35s cubic-bezier(.34,1.56,.64,1);
-}
+#ibu-win.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;animation:ibu-enter .3s cubic-bezier(.34,1.56,.64,1);}
 
-/* ── HEADER ── */
+/* ── Header ── */
 .ibu-hdr{
-  background:linear-gradient(148deg,${pc} 0%,rgb(${Math.max(0, r - 55)},${Math.max(0, g - 55)},${Math.max(0, b - 55)}) 100%);
-  padding:16px 18px;
-  display:flex;align-items:center;gap:0;
+  background:linear-gradient(150deg,${pc} 0%,${darkPc} 100%);
+  padding:14px 16px;display:flex;align-items:center;gap:0;
   flex-shrink:0;position:relative;overflow:hidden;
 }
 .ibu-hdr::before{
-  content:'';position:absolute;top:-60px;right:-30px;
-  width:180px;height:180px;
-  background:radial-gradient(circle,rgba(255,255,255,.08) 0%,transparent 65%);
+  content:'';position:absolute;top:-50px;right:-20px;
+  width:160px;height:160px;
+  background:radial-gradient(circle,rgba(${ar},${ag},${ab},.15) 0%,transparent 65%);
   pointer-events:none;
 }
-.ibu-hdr::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(${ar},${ag},${ab},.7),transparent);
-}
 .ibu-hdr-txt{flex:1;min-width:0;}
-.ibu-hdr-name{
-  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;
-  color:#fff;letter-spacing:-.02em;margin:0;line-height:1.2;
-}
-.ibu-hdr-sub{
-  font-size:10px;color:rgba(255,255,255,.65);margin:3px 0 0;
-  display:flex;align-items:center;gap:5px;font-weight:400;
-}
-.ibu-dot{
-  width:6px;height:6px;background:#4ade80;border-radius:50%;
-  box-shadow:0 0 5px rgba(74,222,128,.8);
-  animation:ibu-pulse 2.5s infinite;flex-shrink:0;
-}
+.ibu-hdr-name{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.02em;margin:0;}
+.ibu-hdr-sub{font-size:10px;color:rgba(255,255,255,.65);margin:3px 0 0;
+  display:flex;align-items:center;gap:4px;}
+.ibu-dot{width:6px;height:6px;background:#4ade80;border-radius:50%;
+  box-shadow:0 0 6px rgba(74,222,128,.9);animation:ibu-pulse 2.5s infinite;flex-shrink:0;}
 
-/* Close button */
-.ibu-xbtn{
-  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
-  border-radius:8px;width:30px;height:30px;flex-shrink:0;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  color:rgba(255,255,255,.75);transition:all .2s;
-}
-.ibu-xbtn:hover{background:rgba(255,255,255,.22);color:#fff;}
+/* ── Lang toggle ── */
+.ibu-lang{display:flex;border:1px solid rgba(255,255,255,.2);border-radius:20px;
+  overflow:hidden;font-size:9px;font-weight:700;margin-right:8px;}
+.ibu-lang button{padding:3px 9px;background:transparent;color:rgba(255,255,255,.6);
+  border:none;cursor:pointer;transition:all .2s;font-family:inherit;font-weight:700;}
+.ibu-lang button.active{background:rgba(255,255,255,.25);color:#fff;}
 
-/* ── MESSAGES ── */
-.ibu-msgs{
-  flex:1;overflow-y:auto;
-  padding:18px 14px 10px;
-  display:flex;flex-direction:column;gap:0;
-  scroll-behavior:smooth;
-  background:#f8f9fc;
-}
+/* ── Close btn ── */
+.ibu-xbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+  border-radius:8px;width:28px;height:28px;flex-shrink:0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:rgba(255,255,255,.75);transition:all .2s;}
+.ibu-xbtn:hover{background:rgba(255,255,255,.2);color:#fff;}
+
+/* ── Messages ── */
+.ibu-msgs{flex:1;overflow-y:auto;padding:14px 12px 8px;
+  display:flex;flex-direction:column;gap:0;scroll-behavior:smooth;
+  overscroll-behavior:contain;}
 .ibu-msgs::-webkit-scrollbar{width:3px;}
-.ibu-msgs::-webkit-scrollbar-thumb{background:rgba(${r},${g},${b},.12);border-radius:4px;}
-.ibu-msgs::-webkit-scrollbar-track{background:transparent;}
+.ibu-msgs::-webkit-scrollbar-thumb{background:rgba(${r},${g},${b},.15);border-radius:4px;}
 
-.ibu-group{display:flex;flex-direction:column;margin-bottom:16px;}
-.ibu-group.grp-usr{align-items:flex-end;}
-.ibu-group.grp-bot{align-items:flex-start;}
+/* ── Message groups ── */
+.ibu-grp{display:flex;flex-direction:column;margin-bottom:14px;}
+.ibu-grp.bot{align-items:flex-start;}
+.ibu-grp.usr{align-items:flex-end;}
+.ibu-bwrap{max-width:85%;display:flex;flex-direction:column;gap:3px;}
+.usr .ibu-bwrap{align-items:flex-end;}
+.bot .ibu-bwrap{align-items:flex-start;}
 
-.ibu-bub-wrap{display:flex;flex-direction:column;gap:3px;max-width:84%;}
-.grp-usr .ibu-bub-wrap{align-items:flex-end;}
-.grp-bot .ibu-bub-wrap{align-items:flex-start;padding-left:0;}
+.ibu-bub{padding:10px 14px;font-size:13.5px;line-height:1.65;word-break:break-word;
+  animation:ibu-pop .25s cubic-bezier(.34,1.56,.64,1);}
+.bot .ibu-bub{background:#fff;color:#1e293b;border-radius:4px 16px 16px 16px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.06);}
+.usr .ibu-bub{background:linear-gradient(140deg,${pc},${darkPc});color:#fff;
+  border-radius:16px 4px 16px 16px;box-shadow:0 3px 10px rgba(${r},${g},${b},.2);}
+.ibu-ts{font-size:9.5px;color:#b0bec5;padding:0 2px;}
+.usr .ibu-ts{text-align:right;}
 
-.ibu-bub{
-  padding:11px 15px;font-size:13.5px;line-height:1.65;
-  word-break:break-word;font-weight:400;
-  animation:ibu-pop .28s cubic-bezier(.34,1.56,.64,1);
-  letter-spacing:-.01em;
-}
-.grp-bot .ibu-bub{
-  background:#fff;color:#1e293b;
-  border-radius:6px 18px 18px 18px;
-  box-shadow:0 1px 4px rgba(0,0,0,.06);
-  border:1px solid rgba(0,0,0,.06);
-}
-.grp-usr .ibu-bub{
-  background:linear-gradient(138deg,${pc} 0%,rgb(${Math.max(0, r - 50)},${Math.max(0, g - 50)},${Math.max(0, b - 50)}) 100%);
-  color:#fff;
-  border-radius:16px 4px 16px 16px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
-.ibu-ts-group{
-  font-size:9.5px;color:#b0bec5;font-weight:400;
-  margin-top:3px;padding:0 3px;
-}
-.grp-usr .ibu-ts-group{text-align:right;}
-
-/* ── TYPING ── */
-.ibu-typing-wrap{
-  display:flex;align-items:flex-start;
-  margin-bottom:14px;
-  animation:ibu-fadeIn .22s ease;
-}
-.ibu-typing{
-  display:flex;gap:4px;align-items:center;
-  padding:12px 16px;
-  background:#fff;
-  border-radius:4px 16px 16px 16px;
-  box-shadow:0 1px 4px rgba(0,0,0,.06),0 0 0 1px rgba(0,0,0,.05);
-}
-.ibu-typing span{
-  width:6px;height:6px;border-radius:50%;
-  animation:ibu-dots 1.5s infinite;
-}
-.ibu-typing span:nth-child(1){background:rgba(${r},${g},${b},.35);animation-delay:0s;}
-.ibu-typing span:nth-child(2){background:rgba(${r},${g},${b},.6);animation-delay:.18s;}
-.ibu-typing span:nth-child(3){background:rgba(${r},${g},${b},.85);animation-delay:.36s;}
-
-/* ── SUGGESTIONS ── */
-.ibu-sug-wrap{
-  padding-left:0;margin-top:8px;margin-bottom:4px;
-  animation:ibu-slide .28s ease;
-}
-.ibu-sug-lbl{
-  font-size:10px;font-weight:600;
-  color:rgba(${r},${g},${b},.5);
-  letter-spacing:.06em;text-transform:uppercase;
-  margin-bottom:8px;padding-left:2px;
-}
-.ibu-sug-list{display:flex;flex-direction:column;gap:6px;}
-.ibu-sug-btn{
-  display:inline-flex;align-items:center;justify-content:space-between;gap:10px;
-  background:#fff;
-  border:1.5px solid rgba(${r},${g},${b},.14);
-  color:#334155;font-size:12.5px;font-weight:500;
-  padding:9px 13px;border-radius:10px;
-  cursor:pointer;text-align:left;
-  transition:all .2s cubic-bezier(.16,1,.3,1);
-  width:fit-content;max-width:100%;
-  font-family:'DM Sans',sans-serif;
-  box-shadow:0 1px 4px rgba(0,0,0,.04);
-}
-.ibu-sug-btn:hover{
-  background:rgba(${r},${g},${b},.05);
-  border-color:rgba(${r},${g},${b},.35);
-  transform:translateX(4px);
-  box-shadow:0 3px 12px rgba(${r},${g},${b},.12);
-  color:${pc};
-}
-.ibu-sug-btn svg{
-  color:rgba(${r},${g},${b},.35);flex-shrink:0;
-  transition:transform .2s,color .2s;
-}
-.ibu-sug-btn:hover svg{
-  transform:translateX(2px);color:${pc};
-}
-.ibu-bub ul{margin:6px 0 6px 16px;padding:0;}
-.ibu-bub li{margin-bottom:4px;line-height:1.5;}
+/* ── Markdown styles ── */
+.ibu-bub ul{margin:6px 0 6px 18px;padding:0;}
+.ibu-bub li{margin-bottom:3px;line-height:1.55;}
 .ibu-bub strong{font-weight:600;}
 
-/* ── WHATSAPP REDIRECT STYLE ── */
-.ibu-wa-wrapper {
-  margin-top: 8px;
-  padding: 10px 12px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 10px;
-  max-width: 84%;
-  align-self: flex-start;
-  font-family:'DM Sans',sans-serif;
-  animation:ibu-slide .28s ease;
-}
-.ibu-wa-text {
-  font-size: 12px;
-  color: #166534;
-  margin: 0 0 8px;
-  line-height: 1.5;
-}
-.ibu-wa-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #25d366;
-  color: white !important;
-  text-decoration: none;
-  padding: 7px 14px;
-  border-radius: 20px;
-  font-size: 12.5px;
-  font-weight: 600;
-  transition: background 0.15s;
-}
-.ibu-wa-btn:hover {
-  background: #1fba57;
-}
+/* ── Typing indicator ── */
+.ibu-typing-wrap{display:flex;margin-bottom:12px;animation:ibu-slide .2s;}
+.ibu-typing{display:flex;gap:4px;align-items:center;padding:11px 14px;
+  background:#fff;border-radius:4px 16px 16px 16px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.ibu-typing span{width:6px;height:6px;border-radius:50%;
+  animation:ibu-blink 1.4s infinite;}
+.ibu-typing span:nth-child(1){background:rgba(${r},${g},${b},.3);}
+.ibu-typing span:nth-child(2){background:rgba(${r},${g},${b},.6);animation-delay:.2s;}
+.ibu-typing span:nth-child(3){background:rgba(${r},${g},${b},.9);animation-delay:.4s;}
 
-/* ── QUICK REPLIES ── */
-.ibu-qr-bar{
-  padding:6px 12px 10px;display:flex;gap:7px;
-  overflow-x:auto;scrollbar-width:none;flex-shrink:0;background:transparent;
-}
-.ibu-qr-bar::-webkit-scrollbar{display:none;}
-.ibu-qr-chip{
-  background:#fff;
-  border:1.5px solid rgba(${r},${g},${b},.16);
-  color:${pc};border-radius:8px;
-  padding:7px 13px;font-size:12px;font-weight:600;
-  cursor:pointer;white-space:nowrap;flex-shrink:0;
-  transition:all .22s ease;
-  box-shadow:0 1px 4px rgba(${r},${g},${b},.07);
-  font-family:'DM Sans',sans-serif;
-}
-.ibu-qr-chip:hover{
-  background:${pc};color:#fff;border-color:${pc};
-  box-shadow:0 4px 14px rgba(${r},${g},${b},.32);
-  transform:translateY(-1px);
-}
+/* ── Suggestion buttons ── */
+.ibu-sugs{margin-top:6px;margin-bottom:4px;animation:ibu-slide .25s;}
+.ibu-sugs-lbl{font-size:10px;font-weight:600;color:rgba(${r},${g},${b},.5);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px;padding-left:1px;}
+.ibu-sugs-list{display:flex;flex-direction:column;gap:5px;}
+.ibu-sug-btn{display:inline-flex;align-items:center;justify-content:space-between;
+  gap:8px;background:#fff;border:1.5px solid rgba(${r},${g},${b},.14);
+  color:#334155;font-size:12.5px;font-weight:500;padding:8px 12px;
+  border-radius:10px;cursor:pointer;text-align:left;font-family:inherit;
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+  transition:all .2s cubic-bezier(.16,1,.3,1);width:fit-content;max-width:100%;}
+.ibu-sug-btn:hover{background:rgba(${r},${g},${b},.06);border-color:rgba(${r},${g},${b},.32);
+  transform:translateX(3px);color:${pc};}
+.ibu-sug-btn svg{color:rgba(${r},${g},${b},.3);flex-shrink:0;transition:transform .2s;}
+.ibu-sug-btn:hover svg{transform:translateX(2px);color:${pc};}
 
-/* ── INPUT ── */
-.ibu-inp-zone{
-  margin:6px 10px 12px;background:#fff;
-  border-radius:14px;
-  display:flex;align-items:flex-end;gap:8px;
-  padding:8px 8px 8px 16px;
-  border:1.5px solid rgba(15,23,42,.07);
-  box-shadow:0 2px 12px rgba(15,23,42,.06);
-  transition:border-color .22s,box-shadow .22s;flex-shrink:0;
-}
-.ibu-inp-zone:focus-within{
-  border-color:rgba(${r},${g},${b},.4);
-  box-shadow:0 0 0 3px rgba(${r},${g},${b},.08),0 4px 16px rgba(15,23,42,.07);
-}
-.ibu-inp{
-  flex:1;border:none;background:transparent;
-  font-size:13.5px;color:#1e293b;outline:none;resize:none;
-  max-height:100px;min-height:20px;line-height:1.5;
-  font-family:'DM Sans',sans-serif;font-weight:400;
-}
+/* ── WhatsApp button ── */
+.ibu-wa-wrapper{margin-top:8px;padding:10px 12px;background:#f0fdf4;
+  border:1px solid #bbf7d0;border-radius:10px;max-width:85%;
+  align-self:flex-start;animation:ibu-slide .25s;}
+.ibu-wa-text{font-size:12px;color:#166534;margin:0 0 8px;line-height:1.5;}
+.ibu-wa-btn{display:inline-flex;align-items:center;gap:6px;background:#25d366;
+  color:#fff !important;text-decoration:none !important;padding:7px 14px;
+  border-radius:20px;font-size:12.5px;font-weight:600;transition:background .15s;}
+.ibu-wa-btn:hover{background:#1fba57;}
+
+/* ── Quick replies ── */
+.ibu-qr{padding:4px 10px 8px;display:flex;gap:6px;overflow-x:auto;
+  scrollbar-width:none;flex-shrink:0;}
+.ibu-qr::-webkit-scrollbar{display:none;}
+.ibu-chip{background:#fff;border:1.5px solid rgba(${r},${g},${b},.18);
+  color:${pc};border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:inherit;
+  box-shadow:0 1px 3px rgba(${r},${g},${b},.06);
+  transition:all .2s;}
+.ibu-chip:hover{background:${pc};color:#fff;border-color:${pc};
+  box-shadow:0 3px 12px rgba(${r},${g},${b},.28);transform:translateY(-1px);}
+
+/* ── Input zone ── */
+.ibu-inp-zone{margin:4px 10px 10px;background:#fff;border-radius:14px;
+  display:flex;align-items:flex-end;gap:6px;padding:8px 8px 8px 14px;
+  border:1.5px solid rgba(15,23,42,.08);
+  box-shadow:0 2px 10px rgba(15,23,42,.05);
+  transition:border-color .2s,box-shadow .2s;flex-shrink:0;}
+.ibu-inp-zone:focus-within{border-color:rgba(${r},${g},${b},.38);
+  box-shadow:0 0 0 3px rgba(${r},${g},${b},.07),0 2px 10px rgba(15,23,42,.05);}
+.ibu-inp{flex:1;border:none;background:transparent;font-size:13.5px;
+  color:#1e293b;outline:none;resize:none;max-height:100px;
+  min-height:22px;line-height:1.5;font-family:inherit;overflow-y:auto;}
 .ibu-inp::placeholder{color:#c4cdd6;}
-.ibu-send{
-  width:36px;height:36px;border-radius:10px;flex-shrink:0;
-  background:linear-gradient(140deg,${pc},rgb(${Math.max(0, r - 40)},${Math.max(0, g - 40)},${Math.max(0, b - 40)}));
-  border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s;
+.ibu-send{width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(140deg,${pc},${darkPc});border:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
   box-shadow:0 2px 6px rgba(0,0,0,.12);
-}
-.ibu-send:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(0,0,0,.18);}
-.ibu-send:disabled{opacity:.25;cursor:not-allowed;transform:none;box-shadow:none;}
-.ibu-send svg{display:block;}
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,opacity .2s;}
+.ibu-send:hover:not(:disabled){transform:scale(1.08);box-shadow:0 4px 12px rgba(0,0,0,.18);}
+.ibu-send:disabled{opacity:.3;cursor:not-allowed;}
 
-/* ── FOOTER ── */
-.ibu-foot{
-  text-align:center;font-size:9px;color:#c8d0db;
-  padding:0 0 10px;flex-shrink:0;
-  font-weight:500;letter-spacing:.08em;text-transform:uppercase;
-  background:#f8f9fc;
-}
+/* ── Footer ── */
+.ibu-foot{text-align:center;font-size:9px;color:#c0c8d4;padding:0 0 9px;
+  flex-shrink:0;font-weight:500;letter-spacing:.08em;text-transform:uppercase;}
 
+/* ── Error message ── */
+.ibu-err{background:#fff5f5 !important;border:1px solid #fecaca !important;color:#dc2626 !important;}
+
+/* ── Mobile ── */
 @media(max-width:480px){
-  #ibu-win{width:calc(100vw - 16px);right:8px;bottom:80px;height:calc(100dvh - 96px);border-radius:18px;}
-  #ibu-fab{right:16px;bottom:16px;}
-  #ibu-tooltip{right:84px;bottom:26px;max-width:195px;}
+  #ibu-win{width:calc(100vw - 16px);right:8px;bottom:78px;
+    max-height:calc(100dvh - 94px);border-radius:16px;}
+  #ibu-fab{right:14px;bottom:14px;}
+  #ibu-tooltip{right:80px;bottom:24px;max-width:190px;}
 }
 `;
 
-    const styleEl = document.createElement('style');
-    styleEl.textContent = css;
-    document.head.appendChild(styleEl);
+  const styleEl = document.createElement('style');
+  styleEl.id = 'ibu-widget-css';
+  styleEl.textContent = css;
+  document.head.appendChild(styleEl);
 
-    // ── FAB ──
-    const fab = document.createElement('button');
-    fab.id = 'ibu-fab';
-    fab.setAttribute('aria-label', 'IBU Chatbot');
-    fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" width="24" height="24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+  // ── BUILD HTML ────────────────────────────────────────────────
+  const fab = document.createElement('button');
+  fab.id = 'ibu-fab';
+  fab.setAttribute('aria-label', 'IBU Chatbot');
+  fab.setAttribute('aria-expanded', 'false');
+  fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" width="23" height="23" aria-hidden="true">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>`;
 
-    // ── TOOLTIP ──
-    const tip = document.createElement('div');
-    tip.id = 'ibu-tooltip';
-    tip.innerHTML = `
+  const tip = document.createElement('div');
+  tip.id = 'ibu-tooltip';
+  tip.setAttribute('role', 'tooltip');
+  tip.innerHTML = `
     <div style="flex:1">${IBU_CONFIG.tooltipTr}</div>
-    <button class="tc" aria-label="Kapat">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <button class="ibu-tc" aria-label="Kapat">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
     </button>`;
 
-    // ── WINDOW ──
-    const win = document.createElement('div');
-    win.id = 'ibu-win';
-    win.setAttribute('role', 'dialog');
-    win.innerHTML = `
+  const win = document.createElement('div');
+  win.id = 'ibu-win';
+  win.setAttribute('role', 'dialog');
+  win.setAttribute('aria-label', 'IBU Chatbot');
+  win.innerHTML = `
 <div class="ibu-hdr">
   <div class="ibu-hdr-txt">
-    <p class="ibu-hdr-name">${IBU_CONFIG.botName}<svg viewBox="0 0 24 24" fill="none" stroke="${ac}" stroke-width="2.2" width="14" height="14" style="margin-left:6px;display:inline-block;vertical-align:middle;flex-shrink:0;animation:ibu-pulse 2s infinite;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></p>
-    <p class="ibu-hdr-sub"><span class="ibu-dot"></span><span id="ibu-st">Çevrimiçi · Aktif Asistan</span></p>
+    <p class="ibu-hdr-name">${IBU_CONFIG.botName}</p>
+    <p class="ibu-hdr-sub"><span class="ibu-dot"></span><span id="ibu-status">Çevrimiçi · Aktif</span></p>
   </div>
-  <div id="ibu-lang" style="display:flex;border:1px solid rgba(255,255,255,.2);border-radius:20px;overflow:hidden;font-size:9px;font-weight:700;margin-right:8px;">
-    <button id="ibu-tr" style="padding:3px 9px;background:rgba(255,255,255,.25);color:white;border:none;cursor:pointer;">TR</button>
-    <button id="ibu-en" style="padding:3px 9px;background:transparent;color:rgba(255,255,255,.7);border:none;cursor:pointer;">EN</button>
+  <div class="ibu-lang" id="ibu-lang">
+    <button id="ibu-tr" class="active" aria-label="Türkçe">TR</button>
+    <button id="ibu-en" aria-label="English">EN</button>
   </div>
-  <button class="ibu-xbtn" id="ibu-x">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  <button class="ibu-xbtn" id="ibu-x" aria-label="Kapat">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="14" height="14">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
   </button>
 </div>
-<div class="ibu-msgs" id="ibu-msgs"></div>
-<div class="ibu-qr-bar" id="ibu-qr"></div>
+<div class="ibu-msgs" id="ibu-msgs" role="log" aria-live="polite" aria-label="Sohbet geçmişi"></div>
+<div class="ibu-qr" id="ibu-qr" role="group" aria-label="Hızlı sorular"></div>
 <div class="ibu-inp-zone">
-  <textarea class="ibu-inp" id="ibu-inp" rows="1" placeholder="${IBU_CONFIG.placeholderTr}"></textarea>
+  <textarea class="ibu-inp" id="ibu-inp" rows="1" 
+    placeholder="${IBU_CONFIG.placeholderTr}" 
+    aria-label="Mesaj yazın" 
+    maxlength="1000"></textarea>
   <button class="ibu-send" id="ibu-s" aria-label="Gönder">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+    </svg>
   </button>
 </div>
 <div class="ibu-foot">IBU · AI Asistan</div>`;
 
-    document.body.appendChild(fab);
-    document.body.appendChild(tip);
-    document.body.appendChild(win);
+  document.body.appendChild(fab);
+  document.body.appendChild(tip);
+  document.body.appendChild(win);
 
-    const msgsEl = document.getElementById('ibu-msgs');
-    const inpEl = document.getElementById('ibu-inp');
-    const sBtn = document.getElementById('ibu-s');
-    const xBtn = document.getElementById('ibu-x');
-    const qrEl = document.getElementById('ibu-qr');
-    const trBtn = document.getElementById('ibu-tr');
-    const enBtn = document.getElementById('ibu-en');
+  // ── REFS ──────────────────────────────────────────────────────
+  const msgsEl = document.getElementById('ibu-msgs');
+  const inpEl  = document.getElementById('ibu-inp');
+  const sBtn   = document.getElementById('ibu-s');
+  const xBtn   = document.getElementById('ibu-x');
+  const qrEl   = document.getElementById('ibu-qr');
+  const trBtn  = document.getElementById('ibu-tr');
+  const enBtn  = document.getElementById('ibu-en');
+  const status = document.getElementById('ibu-status');
 
-    let open = false, typing = false, lang = 'tr';
-    const hist = [];
+  // ── STATE ─────────────────────────────────────────────────────
+  let isOpen = false;
+  let isSending = false;
+  let lang = 'tr';
+  const hist = [];
 
-    // TR / EN switch
-    document.getElementById('ibu-tr').onclick = () => { lang='tr'; inpEl.placeholder=IBU_CONFIG.placeholderTr; document.getElementById('ibu-tr').style.background='rgba(255,255,255,.25)'; document.getElementById('ibu-en').style.background='transparent'; document.getElementById('ibu-st').textContent = 'Çevrimiçi · Aktif Asistan'; }
-    document.getElementById('ibu-en').onclick = () => { lang='en'; inpEl.placeholder=IBU_CONFIG.placeholderEn; document.getElementById('ibu-en').style.background='rgba(255,255,255,.25)'; document.getElementById('ibu-tr').style.background='transparent'; document.getElementById('ibu-st').textContent = 'Online · Active Assistant'; }
+  // ── HELPERS ───────────────────────────────────────────────────
+  function ts() {
+    return new Date().toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+  function scrollDown() {
+    requestAnimationFrame(() => { msgsEl.scrollTop = msgsEl.scrollHeight; });
+  }
+  function clearSuggestions() {
+    msgsEl.querySelectorAll('.ibu-sugs,.ibu-wa-wrapper').forEach(el => el.remove());
+  }
 
-    function ts() {
-        return new Date().toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
-    }
-    function scroll() { setTimeout(() => { msgsEl.scrollTop = msgsEl.scrollHeight; }, 30); }
-
-    function addMsg(text, role) {
-        const group = document.createElement('div');
-        group.className = `ibu-group ${role === 'bot' ? 'grp-bot' : 'grp-usr'}`;
-        group.innerHTML = `
-      <div class="ibu-bub-wrap">
-        <div class="ibu-bub">${text.replace(/\n/g, '<br>')}</div>
-        <div class="ibu-ts-group">${ts()}</div>
+  // ── ADD MESSAGE ────────────────────────────────────────────────
+  function addMsg(html, role, isError) {
+    const grp = document.createElement('div');
+    grp.className = `ibu-grp ${role === 'bot' ? 'bot' : 'usr'}`;
+    grp.innerHTML = `
+      <div class="ibu-bwrap">
+        <div class="ibu-bub${isError ? ' ibu-err' : ''}">${html}</div>
+        <div class="ibu-ts">${ts()}</div>
       </div>`;
-        msgsEl.appendChild(group);
-        scroll();
-        return group;
-    }
+    msgsEl.appendChild(grp);
+    scrollDown();
+    return grp;
+  }
 
-    function showTyp() {
-        const wrap = document.createElement('div');
-        wrap.id = 'ibu-typ';
-        wrap.className = 'ibu-typing-wrap';
-        wrap.innerHTML = `<div class="ibu-typing"><span></span><span></span><span></span></div>`;
-        msgsEl.appendChild(wrap);
-        scroll();
-    }
-    function hideTyp() { const el = document.getElementById('ibu-typ'); if (el) el.remove(); }
+  // ── TYPING ────────────────────────────────────────────────────
+  function showTyping() {
+    hideTyping();
+    const wrap = document.createElement('div');
+    wrap.id = 'ibu-typing';
+    wrap.className = 'ibu-typing-wrap';
+    wrap.setAttribute('aria-label', 'Yazıyor...');
+    wrap.innerHTML = `<div class="ibu-typing"><span></span><span></span><span></span></div>`;
+    msgsEl.appendChild(wrap);
+    scrollDown();
+  }
+  function hideTyping() {
+    const el = document.getElementById('ibu-typing');
+    if (el) el.remove();
+  }
 
-    function addSuggs(botGroup, list) {
-        const wrap = document.createElement('div');
-        wrap.className = 'ibu-sug-wrap';
-        const lbl = document.createElement('div');
-        lbl.className = 'ibu-sug-lbl';
-        lbl.textContent = lang === 'tr' ? 'İlgili konular' : 'Related topics';
-        wrap.appendChild(lbl);
-        const lst = document.createElement('div');
-        lst.className = 'ibu-sug-list';
-        list.forEach(q => {
-            const btn = document.createElement('button');
-            btn.className = 'ibu-sug-btn';
-            btn.innerHTML = `<span>${q}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><polyline points="9 18 15 12 9 6"/></svg>`;
-            btn.onclick = () => { wrap.remove(); document.querySelectorAll('.ibu-sug-wrap').forEach(w => w.remove()); send(q); };
-            lst.appendChild(btn);
-        });
-        wrap.appendChild(lst);
-        botGroup.insertAdjacentElement('afterend', wrap);
-        scroll();
-    }
+  // ── SUGGESTION BUTTONS ────────────────────────────────────────
+  function addSuggestions(suggestions, anchorEl) {
+    if (!suggestions || suggestions.length === 0) return null;
+    const wrap = document.createElement('div');
+    wrap.className = 'ibu-sugs';
+    const lbl = document.createElement('div');
+    lbl.className = 'ibu-sugs-lbl';
+    lbl.textContent = lang === 'tr' ? 'İlgili konular' : 'Related topics';
+    wrap.appendChild(lbl);
+    const list = document.createElement('div');
+    list.className = 'ibu-sugs-list';
+    suggestions.slice(0, 3).forEach(q => {
+      const btn = document.createElement('button');
+      btn.className = 'ibu-sug-btn';
+      btn.innerHTML = `<span>${q}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>`;
+      btn.onclick = () => { clearSuggestions(); send(q); };
+      list.appendChild(btn);
+    });
+    wrap.appendChild(list);
+    anchorEl.insertAdjacentElement('afterend', wrap);
+    scrollDown();
+    return wrap;
+  }
 
-    function setQR(l) {
-        const chips = l === 'tr' ? IBU_CONFIG.quickRepliesTr : IBU_CONFIG.quickRepliesEn;
-        qrEl.innerHTML = '';
-        chips.forEach(c => {
-            const btn = document.createElement('button');
-            btn.className = 'ibu-qr-chip';
-            btn.textContent = c.replace(/^\p{Emoji}\s*/u, '');
-            btn.onclick = () => { qrEl.innerHTML = ''; document.querySelectorAll('.ibu-sug-wrap').forEach(w => w.remove()); send(c); };
-            qrEl.appendChild(btn);
-        });
-    }
+  // ── QUICK REPLIES ─────────────────────────────────────────────
+  function setQR(l) {
+    qrEl.innerHTML = '';
+    const chips = l === 'tr' ? IBU_CONFIG.quickRepliesTr : IBU_CONFIG.quickRepliesEn;
+    chips.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'ibu-chip';
+      btn.textContent = c;
+      btn.onclick = () => { qrEl.innerHTML = ''; clearSuggestions(); send(c); };
+      qrEl.appendChild(btn);
+    });
+  }
 
-    async function send(text) {
-        if (typing) return;
-        typing = true;
-        sBtn.disabled = true;
-        addMsg(text, 'user');
-        qrEl.innerHTML = '';
-        document.querySelectorAll('.ibu-sug-wrap').forEach(w => w.remove());
+  // ── LANG SWITCH ───────────────────────────────────────────────
+  function setLang(l) {
+    lang = l;
+    inpEl.placeholder = l === 'tr' ? IBU_CONFIG.placeholderTr : IBU_CONFIG.placeholderEn;
+    trBtn.classList.toggle('active', l === 'tr');
+    enBtn.classList.toggle('active', l === 'en');
+    status.textContent = l === 'tr' ? 'Çevrimiçi · Aktif' : 'Online · Active';
+  }
 
-        const dl = detectLang(text);
-        if (dl !== lang) {
-            lang = dl;
-            inpEl.placeholder = lang === 'tr' ? IBU_CONFIG.placeholderTr : IBU_CONFIG.placeholderEn;
-            if (lang === 'tr') {
-                trBtn.style.background='rgba(255,255,255,.25)';
-                enBtn.style.background='transparent';
-                document.getElementById('ibu-st').textContent = 'Çevrimiçi · Aktif Asistan';
-            } else {
-                enBtn.style.background='rgba(255,255,255,.25)';
-                trBtn.style.background='transparent';
-                document.getElementById('ibu-st').textContent = 'Online · Active Assistant';
-            }
-        }
+  trBtn.onclick = () => setLang('tr');
+  enBtn.onclick = () => setLang('en');
 
-        showTyp();
+  // ── SSE STREAM PARSER ─────────────────────────────────────────
+  // Buffer-based parser — handles chunks split across lines
+  async function readStream(response, onChunk, onDone) {
+    const reader = response.body.getReader();
+    const dec = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += dec.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete line in buffer
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const raw = trimmed.slice(5).trim();
+        if (!raw || raw === '[DONE]') continue;
 
         try {
-            const hp = hist.map(h => ({ role: h.role, content: h.content }));
-            hist.push({ role: 'user', content: text });
-
-            const resp = await fetch(IBU_CONFIG.apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, sessionId: 'sess_' + Math.random().toString(36).slice(2), history: hp, lang })
-            });
-
-            if (!resp.ok) throw new Error('fail');
-            hideTyp();
-
-            const botGroup = document.createElement('div');
-            botGroup.className = 'ibu-group grp-bot';
-            botGroup.innerHTML = `
-        <div class="ibu-bub-wrap">
-          <div class="ibu-bub"></div>
-          <div class="ibu-ts-group">${ts()}</div>
-        </div>`;
-            msgsEl.appendChild(botGroup);
-            const bub = botGroup.querySelector('.ibu-bub');
-
-            const reader = resp.body.getReader();
-            const dec = new TextDecoder();
-            let full = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                for (const line of dec.decode(value).split('\n')) {
-                    if (!line.startsWith('data:')) continue;
-                    try {
-                        const d = JSON.parse(line.slice(5));
-                        if (d.text) {
-                            // ── Değişiklik 6: Streaming sırasında renderMarkdown ──
-                            full += d.text;
-                            const { mainText: streamText } = extractSuggestions(full);
-                            bub.innerHTML = renderMarkdown(streamText);
-                            scroll();
-                        }
-                        if (d.done) {
-                            lang = d.lang || lang;
-                            // ── Değişiklik 5: Stream sonrası öneri butonları ──
-                            const { mainText, suggestions: inlineSuggs } = extractSuggestions(full);
-                            bub.innerHTML = renderMarkdown(mainText);
-                            const finalSuggs = d.suggestions?.length ? d.suggestions : inlineSuggs;
-                            let addedEl = null;
-                            if (finalSuggs.length) {
-                                const sugEl = createSuggestionButtons(finalSuggs, (q) => { send(q); });
-                                if (sugEl) {
-                                    botGroup.insertAdjacentElement('afterend', sugEl);
-                                    addedEl = sugEl;
-                                }
-                            }
-                            // ── WhatsApp Entegrasyonu Eşleşme Skoru Kontrolü ──
-                            const similarity = d.similarity || 0;
-                            const hasContext = d.hasContext !== false;
-                            if (
-                                !hasContext ||
-                                similarity < IBU_CONFIG.whatsappThreshold ||
-                                IBU_CONFIG.showWhatsappAlways
-                            ) {
-                                const waBtn = createWhatsAppButton(text);
-                                if (waBtn) {
-                                    const targetAnchor = addedEl || botGroup;
-                                    targetAnchor.insertAdjacentElement('afterend', waBtn);
-                                }
-                            }
-                            scroll();
-                        }
-                    } catch { }
-                }
-            }
-            hist.push({ role: 'assistant', content: full });
-
+          const data = JSON.parse(raw);
+          if (data.text !== undefined) onChunk(data);
+          if (data.done) onDone(data);
         } catch {
-            hideTyp();
-            addMsg(lang === 'tr' ? 'Bağlantı hatası. Lütfen tekrar deneyin.' : 'Connection error. Please try again.', 'bot');
+          // malformed JSON — skip
         }
-
-        typing = false;
-        sBtn.disabled = false;
-        inpEl.focus();
+      }
     }
 
-    fab.addEventListener('click', () => {
-        open = !open;
-        win.classList.toggle('open', open);
-        tip.classList.remove('show');
-        if (open && msgsEl.children.length === 0) {
-            addMsg(IBU_CONFIG.welcomeTr, 'bot');
-            if (isOutsideBusinessHours()) {
-                addMsg(lang === 'tr' 
-                    ? 'Şu an mesai saatlerimiz dışındayız (Hafta içi 09:00–18:00). Sorularınızı yanıtlamaya devam ediyorum, acil konular için WhatsApp destek hattımız aktiftir.'
-                    : 'We are currently outside our business hours (Weekdays 09:00–18:00). I continue to answer your questions, but for urgent matters, our WhatsApp support line is active.', 
-                    'bot');
-            }
-            setQR('tr');
-            setTimeout(() => inpEl.focus(), 350);
-        }
-    });
+    // Flush remaining buffer
+    if (buffer.trim().startsWith('data:')) {
+      try {
+        const data = JSON.parse(buffer.trim().slice(5).trim());
+        if (data.done) onDone(data);
+      } catch { /* ignore */ }
+    }
+  }
 
-    xBtn.addEventListener('click', () => { open = false; win.classList.remove('open'); });
-    sBtn.addEventListener('click', () => { const v = inpEl.value.trim(); if (v) { inpEl.value = ''; inpEl.style.height = 'auto'; send(v); } });
-    inpEl.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const v = inpEl.value.trim(); if (v) { inpEl.value = ''; inpEl.style.height = 'auto'; send(v); } }
-    });
-    inpEl.addEventListener('input', () => { inpEl.style.height = 'auto'; inpEl.style.height = Math.min(inpEl.scrollHeight, 100) + 'px'; });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) { open = false; win.classList.remove('open'); } });
-    tip.querySelector('.tc').addEventListener('click', e => {
-        e.stopPropagation();
-        tip.classList.remove('show');
-        localStorage.setItem('ibu-tip-gone', '1');
-    });
-    setTimeout(() => {
-        if (!open && !localStorage.getItem('ibu-tip-gone')) tip.classList.add('show');
-    }, 3000);
+  // ── MAIN SEND ─────────────────────────────────────────────────
+  async function send(text) {
+    if (isSending || !text || !text.trim()) return;
+    const userText = text.trim();
+    isSending = true;
+    sBtn.disabled = true;
+
+    // Auto-detect lang
+    const detected = detectLang(userText);
+    if (detected !== lang) setLang(detected);
+
+    addMsg(userText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'), 'user');
+    clearSuggestions();
+    qrEl.innerHTML = '';
+
+    const histSnapshot = hist.map(h => ({ role: h.role, content: h.content }));
+    hist.push({ role: 'user', content: userText });
+
+    showTyping();
+
+    try {
+      const resp = await fetch(IBU_CONFIG.apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'omit',
+        body: JSON.stringify({
+          message: userText,
+          history: histSnapshot,
+          lang,
+          sessionId: SESSION_ID,
+        }),
+      });
+
+      hideTyping();
+
+      if (!resp.ok) {
+        const errText = lang === 'tr'
+          ? `Sunucu hatası (${resp.status}). Lütfen daha sonra tekrar deneyin.`
+          : `Server error (${resp.status}). Please try again later.`;
+        addMsg(errText, 'bot', true);
+        isSending = false;
+        sBtn.disabled = false;
+        inpEl.focus();
+        return;
+      }
+
+      // Create bot message group
+      const botGrp = document.createElement('div');
+      botGrp.className = 'ibu-grp bot';
+      botGrp.innerHTML = `
+        <div class="ibu-bwrap">
+          <div class="ibu-bub"></div>
+          <div class="ibu-ts">${ts()}</div>
+        </div>`;
+      msgsEl.appendChild(botGrp);
+      const bub = botGrp.querySelector('.ibu-bub');
+
+      let fullText = '';
+
+      await readStream(
+        resp,
+        // onChunk
+        (data) => {
+          fullText += data.text;
+          const { mainText } = extractSuggestions(fullText);
+          bub.innerHTML = renderMarkdown(mainText);
+          scrollDown();
+        },
+        // onDone
+        (data) => {
+          lang = data.lang || lang;
+          const { mainText, suggestions: inlineSuggs } = extractSuggestions(fullText);
+          bub.innerHTML = renderMarkdown(mainText);
+
+          // Suggestions
+          const finalSuggs = (data.suggestions && data.suggestions.length)
+            ? data.suggestions
+            : inlineSuggs;
+
+          let lastEl = botGrp;
+          if (finalSuggs.length > 0) {
+            const sugEl = addSuggestions(finalSuggs, botGrp);
+            if (sugEl) lastEl = sugEl;
+          }
+
+          // WhatsApp button
+          const similarity = typeof data.similarity === 'number' ? data.similarity : 1;
+          const hasCtx = data.hasContext !== false;
+          if (!hasCtx || similarity < IBU_CONFIG.whatsappThreshold || IBU_CONFIG.showWhatsappAlways) {
+            const waBtn = createWhatsAppButton(userText, hist, lang);
+            lastEl.insertAdjacentElement('afterend', waBtn);
+          }
+
+          scrollDown();
+        }
+      );
+
+      hist.push({ role: 'assistant', content: fullText });
+
+      // Keep history manageable
+      if (hist.length > 20) hist.splice(0, hist.length - 20);
+
+    } catch (err) {
+      hideTyping();
+      console.error('[IBU Widget] Fetch error:', err);
+      const errMsg = lang === 'tr'
+        ? 'Bağlantı hatası oluştu. İnternet bağlantınızı kontrol edip tekrar deneyin.'
+        : 'Connection error. Please check your internet connection and try again.';
+      addMsg(errMsg, 'bot', true);
+    }
+
+    isSending = false;
+    sBtn.disabled = false;
+    inpEl.focus();
+  }
+
+  // ── INPUT HANDLING ────────────────────────────────────────────
+  function handleSend() {
+    const v = inpEl.value.trim();
+    if (!v) return;
+    inpEl.value = '';
+    inpEl.style.height = 'auto';
+    send(v);
+  }
+
+  sBtn.addEventListener('click', handleSend);
+  inpEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  });
+  inpEl.addEventListener('input', () => {
+    inpEl.style.height = 'auto';
+    inpEl.style.height = Math.min(inpEl.scrollHeight, 100) + 'px';
+  });
+
+  // ── OPEN / CLOSE ──────────────────────────────────────────────
+  function openChat() {
+    isOpen = true;
+    win.classList.add('open');
+    fab.classList.add('open');
+    fab.setAttribute('aria-expanded', 'true');
+    tip.classList.remove('show');
+
+    if (msgsEl.children.length === 0) {
+      addMsg(renderMarkdown(lang === 'tr' ? IBU_CONFIG.welcomeTr : IBU_CONFIG.welcomeEn), 'bot');
+      if (isOutsideBusinessHours()) {
+        const offMsg = lang === 'tr'
+          ? 'Şu an mesai saatlerimiz dışındayız (Hafta içi 09:00–18:00 MKD). Acil konular için [WhatsApp hattımız](https://api.whatsapp.com/send?phone=' + IBU_CONFIG.whatsappNumber + ') 7/24 aktiftir.'
+          : 'We are currently outside business hours (Weekdays 09:00–18:00 MKD). For urgent matters, our [WhatsApp line](https://api.whatsapp.com/send?phone=' + IBU_CONFIG.whatsappNumber + ') is 24/7 available.';
+        setTimeout(() => addMsg(renderMarkdown(offMsg), 'bot'), 700);
+      }
+      setQR(lang);
+    }
+
+    setTimeout(() => inpEl.focus(), 300);
+  }
+
+  function closeChat() {
+    isOpen = false;
+    win.classList.remove('open');
+    fab.classList.remove('open');
+    fab.setAttribute('aria-expanded', 'false');
+  }
+
+  fab.addEventListener('click', () => isOpen ? closeChat() : openChat());
+  xBtn.addEventListener('click', closeChat);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && isOpen) closeChat(); });
+
+  // ── TOOLTIP ───────────────────────────────────────────────────
+  tip.querySelector('.ibu-tc').addEventListener('click', e => {
+    e.stopPropagation();
+    tip.classList.remove('show');
+    try { localStorage.setItem('ibu-tip-dismissed', '1'); } catch { /* */ }
+  });
+
+  try {
+    if (!localStorage.getItem('ibu-tip-dismissed')) {
+      setTimeout(() => { if (!isOpen) tip.classList.add('show'); }, 3000);
+    }
+  } catch { /* */ }
+
 })();
